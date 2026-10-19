@@ -4,9 +4,10 @@ extends Node3D
 
 const CELL := 1.0
 const WALL_H := 0.7
-const BALL_R := 0.3
+const BALL_R := 0.35
 const TILT_FORCE := 30.0
 const MARGIN := 0.7
+const CAM_FOV := 40.0
 const HOLE_R := 0.3
 
 var level := 1
@@ -24,6 +25,9 @@ var camera: Camera3D
 var lbl_info: Label
 var lbl_msg: Label
 var btn_axes: Button
+var lbl_dbg: Label
+var board_w := 0.0
+var board_d := 0.0
 
 var tilt := Vector2.ZERO
 var calib := Vector2.ZERO
@@ -55,13 +59,13 @@ func _mat(color: Color, metallic := 0.0, rough := 0.5, emis := Color.BLACK, emis
 func _make_materials() -> void:
 	mats.chip = _mat(Color(0.05, 0.05, 0.06), 0.1, 0.45)
 	mats.chip_mark = _mat(Color(0.8, 0.8, 0.8), 0.0, 0.6)
-	mats.alu = _mat(Color(0.72, 0.74, 0.78), 1.0, 0.3)
+	mats.alu = _mat(Color(0.65, 0.67, 0.71), 0.9, 0.4)
 	mats.cap_body = _mat(Color(0.05, 0.12, 0.35), 0.2, 0.35)
-	mats.cap_top = _mat(Color(0.8, 0.82, 0.85), 1.0, 0.25)
+	mats.cap_top = _mat(Color(0.7, 0.72, 0.75), 0.8, 0.5)
 	mats.gold = _mat(Color(0.95, 0.75, 0.3), 1.0, 0.25)
 	mats.black = _mat(Color(0.01, 0.01, 0.01), 0.0, 1.0)
 	mats.copper = _mat(Color(0.86, 0.55, 0.30), 1.0, 0.3)
-	mats.chrome = _mat(Color(0.92, 0.94, 0.97), 1.0, 0.05)
+	mats.chrome = _mat(Color(0.95, 0.96, 1.0), 0.95, 0.08)
 	mats.silver = _mat(Color(0.8, 0.82, 0.85), 1.0, 0.35)
 	var sm := ShaderMaterial.new()
 	sm.shader = load("res://games/marble_maze/pcb.gdshader")
@@ -76,14 +80,13 @@ func _phys(friction: float, bounce: float) -> PhysicsMaterial:
 # ---------------------------------------------------------- środowisko, kamera
 func _setup_environment() -> void:
 	var env := Environment.new()
-	env.background_mode = Environment.BG_COLOR
-	env.background_color = Color(0.015, 0.025, 0.03)
+	env.background_mode = Environment.BG_SKY
 	var sky := Sky.new()
 	var sm := ProceduralSkyMaterial.new()
-	sm.sky_top_color = Color(0.55, 0.62, 0.75)
-	sm.sky_horizon_color = Color(0.9, 0.85, 0.8)
-	sm.ground_horizon_color = Color(0.5, 0.45, 0.4)
-	sm.ground_bottom_color = Color(0.08, 0.08, 0.1)
+	sm.sky_top_color = Color(0.35, 0.42, 0.55)
+	sm.sky_horizon_color = Color(0.55, 0.55, 0.55)
+	sm.ground_horizon_color = Color(0.2, 0.2, 0.22)
+	sm.ground_bottom_color = Color(0.02, 0.02, 0.03)
 	sky.sky_material = sm
 	env.sky = sky
 	env.ambient_light_source = Environment.AMBIENT_SOURCE_SKY
@@ -91,8 +94,9 @@ func _setup_environment() -> void:
 	env.reflected_light_source = Environment.REFLECTION_SOURCE_SKY
 	env.tonemap_mode = Environment.TONE_MAPPER_FILMIC
 	env.glow_enabled = true
-	env.glow_intensity = 0.9
-	env.glow_bloom = 0.08
+	env.glow_intensity = 0.7
+	env.glow_bloom = 0.0
+	env.glow_hdr_threshold = 1.3
 	var we := WorldEnvironment.new()
 	we.environment = env
 	add_child(we)
@@ -109,20 +113,24 @@ func _setup_camera() -> void:
 	add_child(cam_rig)
 	camera = Camera3D.new()
 	camera.keep_aspect = Camera3D.KEEP_WIDTH
-	camera.fov = 50.0
+	camera.fov = CAM_FOV
 	cam_rig.add_child(camera)
 
 func _fit_camera() -> void:
-	var w := cols * CELL + MARGIN * 2.0 + 0.3
-	var h := rows * CELL + MARGIN * 2.0
+	# Kamera dokładnie z góry; labirynt wypełnia całą szerokość ekranu,
+	# a płytka PCB (board_w x board_d) wypełnia resztę ekranu.
+	var w := cols * CELL + 0.6
 	var vp := get_viewport().get_visible_rect().size
 	var aspect := vp.x / maxf(vp.y, 1.0)
-	var half_h := tan(deg_to_rad(camera.fov / 2.0))
-	var dist := (w / 2.0) / half_h
-	dist = maxf(dist, (h / 2.0) / (half_h / aspect))
-	dist *= 1.05
-	camera.position = Vector3(0, dist, dist * 0.25)
-	camera.look_at(Vector3.ZERO, Vector3(0, 0, -1))
+	var half_tan := tan(deg_to_rad(CAM_FOV / 2.0))
+	var dist := (w / 2.0) / half_tan + WALL_H
+	var half_w := dist * half_tan
+	var half_h := half_w / aspect
+	# zapas na wizualny przechył kamery
+	board_w = maxf(cols * CELL + MARGIN * 2.0, half_w * 2.0 * 1.35)
+	board_d = maxf(rows * CELL + MARGIN * 2.0, half_h * 2.0 * 1.35)
+	camera.position = Vector3(0, dist, 0)
+	camera.rotation_degrees = Vector3(-90, 0, 0)
 
 # ------------------------------------------------------------------------ UI
 func _setup_ui() -> void:
@@ -136,6 +144,14 @@ func _setup_ui() -> void:
 	lbl_info.add_theme_constant_override("outline_size", 8)
 	lbl_info.add_theme_color_override("font_outline_color", Color.BLACK)
 	ui.add_child(lbl_info)
+
+	lbl_dbg = Label.new()
+	lbl_dbg.position = Vector2(24, 100)
+	lbl_dbg.add_theme_font_size_override("font_size", 22)
+	lbl_dbg.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
+	lbl_dbg.add_theme_constant_override("outline_size", 6)
+	lbl_dbg.add_theme_color_override("font_outline_color", Color.BLACK)
+	ui.add_child(lbl_dbg)
 
 	lbl_msg = Label.new()
 	lbl_msg.set_anchors_preset(Control.PRESET_FULL_RECT)
@@ -244,9 +260,9 @@ func _load_level(n: int) -> void:
 				"O":
 					holes.append(p)
 					_add_hole(p)
+	_fit_camera()
 	_add_board()
 	_spawn_ball()
-	_fit_camera()
 	_update_ui()
 
 func _box(parent: Node3D, size: Vector3, pos: Vector3, mat: Material) -> MeshInstance3D:
@@ -301,8 +317,8 @@ func _add_wall(body: StaticBody3D, p: Vector3, x: int, z: int) -> void:
 					_cyl(root, 0.05, 0.2, Vector3(-0.22 + ix * 0.44, 0.55, -0.22 + iz * 0.44), mats.gold)
 
 func _add_start(p: Vector3) -> void:
-	_box(level_root, Vector3(0.9, 0.03, 0.9), p + Vector3(0, 0.015, 0), mats.silver)
-	_box(level_root, Vector3(0.6, 0.035, 0.12), p + Vector3(0, 0.02, 0.25), mats.black)
+	_box(level_root, Vector3(0.94, 0.03, 0.94), p + Vector3(0, 0.015, 0), mats.gold)
+	_box(level_root, Vector3(0.8, 0.035, 0.8), p + Vector3(0, 0.02, 0), mats.black)
 
 func _add_goal(p: Vector3) -> void:
 	_box(level_root, Vector3(0.94, 0.06, 0.94), p + Vector3(0, 0.03, 0), mats.gold)
@@ -332,9 +348,12 @@ func _add_hole(p: Vector3) -> void:
 	level_root.add_child(ring)
 
 func _add_board() -> void:
-	var w := cols * CELL + MARGIN * 2.0
-	var d := rows * CELL + MARGIN * 2.0
+	var w := board_w
+	var d := board_d
+	var mw := cols * CELL + MARGIN * 2.0   # rozmiar samego labiryntu z ramką
+	var md := rows * CELL + MARGIN * 2.0
 	_box(level_root, Vector3(w, 0.2, d), Vector3(0, -0.1, 0), mats.pcb)
+	_add_decor(mw, md)
 
 	var body := StaticBody3D.new()
 	body.physics_material_override = _phys(0.8, 0.1)
@@ -353,7 +372,7 @@ func _add_board() -> void:
 	lbl.pixel_size = 0.004
 	lbl.modulate = Color(0.9, 0.95, 0.9, 0.9)
 	lbl.rotation_degrees = Vector3(-90, 0, 0)
-	lbl.position = Vector3(0, 0.011, d / 2.0 - MARGIN / 2.0)
+	lbl.position = Vector3(0, 0.011, md / 2.0 - MARGIN / 2.0)
 	level_root.add_child(lbl)
 
 	# Pulsujące diody LED na marginesie
@@ -366,11 +385,32 @@ func _add_board() -> void:
 		sm.height = 0.14
 		led.mesh = sm
 		led.material_override = lm
-		led.position = Vector3(-w / 2.0 + 0.5 + i * 0.4, 0.05, -d / 2.0 + MARGIN / 2.0)
+		led.position = Vector3(-mw / 2.0 + 0.5 + i * 0.4, 0.05, -md / 2.0 + MARGIN / 2.0)
 		level_root.add_child(led)
 		var tw := level_root.create_tween().set_loops()
 		tw.tween_property(lm, "emission_energy_multiplier", 4.5, 0.6 + i * 0.17)
 		tw.tween_property(lm, "emission_energy_multiplier", 0.3, 0.6 + i * 0.17)
+
+func _add_decor(mw: float, md: float) -> void:
+	# Płaskie elementy SMD poza obszarem labiryntu - tylko wizualne, bez kolizji.
+	var x_max := int(board_w / 2.0)
+	var z_max := int(board_d / 2.0)
+	for gx in range(-x_max, x_max + 1):
+		for gz in range(-z_max, z_max + 1):
+			if absf(gx) < mw / 2.0 + 0.2 and absf(gz) < md / 2.0 + 0.2:
+				continue
+			var h := fposmod(sin(gx * 12.9898 + gz * 78.233) * 43758.5453, 1.0)
+			var pos := Vector3(gx, 0, gz)
+			if h < 0.10:
+				_box(level_root, Vector3(0.9, 0.12, 0.6), pos + Vector3(0, 0.06, 0), mats.chip)
+				_box(level_root, Vector3(0.1, 0.13, 0.62), pos + Vector3(-0.4, 0.065, 0), mats.silver)
+				_box(level_root, Vector3(0.1, 0.13, 0.62), pos + Vector3(0.4, 0.065, 0), mats.silver)
+			elif h < 0.15:
+				_cyl(level_root, 0.3, 0.3, pos + Vector3(0, 0.15, 0), mats.cap_body)
+				_cyl(level_root, 0.26, 0.02, pos + Vector3(0, 0.31, 0), mats.cap_top)
+			elif h < 0.18:
+				_box(level_root, Vector3(0.8, 0.2, 0.8), pos + Vector3(0, 0.1, 0), mats.chip)
+				_box(level_root, Vector3(0.1, 0.02, 0.1), pos + Vector3(-0.28, 0.21, -0.28), mats.chip_mark)
 
 func _spawn_ball() -> void:
 	ball = RigidBody3D.new()
@@ -395,6 +435,11 @@ func _spawn_ball() -> void:
 	mi.mesh = sm
 	mi.material_override = mats.chrome
 	ball.add_child(mi)
+	var glow := OmniLight3D.new()
+	glow.position = Vector3(0, 1.4, 0)
+	glow.omni_range = 4.0
+	glow.light_energy = 0.35
+	ball.add_child(glow)
 	level_root.add_child(ball)
 	ball.global_position = start_pos + Vector3(0, BALL_R + 0.02, 0)
 	ball.body_entered.connect(_on_ball_hit)
@@ -433,6 +478,8 @@ func _process(delta: float) -> void:
 	cam_rig.rotation = Vector3(-tilt.y * 0.3, 0.0, tilt.x * 0.3)
 	if state == "play":
 		_update_ui()
+	var g := Input.get_gravity()
+	lbl_dbg.text = "g=(%.1f, %.1f, %.1f)  tilt=(%.2f, %.2f)" % [g.x, g.y, g.z, tilt.x, tilt.y]
 
 func _physics_process(delta: float) -> void:
 	if state != "play" or ball == null:

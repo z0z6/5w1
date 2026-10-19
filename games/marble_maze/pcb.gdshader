@@ -37,7 +37,7 @@ void fragment() {
 	col = mix(col, vec3(0.02), hole);
 
 	ALBEDO = col;
-	ROUGHNESS = mix(0.32, 0.28, pad);
+	ROUGHNESS = mix(0.55, 0.3, pad);
 	METALLIC = pad * 0.9;
-	SPECULAR = 0.7;
+	SPECULAR = 0.35;
 }
