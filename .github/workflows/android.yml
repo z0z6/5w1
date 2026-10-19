@@ -14,59 +14,34 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Diagnostyka środowiska
-        run: |
-          echo "HOME=$HOME"
-          echo "GODOT_VERSION=$GODOT_VERSION"
-          echo "ANDROID_HOME=$ANDROID_HOME"
-          echo "ANDROID_SDK_ROOT=$ANDROID_SDK_ROOT"
-          echo "JAVA_HOME=$JAVA_HOME"
-          godot --version || true
-          ls -la /root/.local/share/godot/export_templates/ || true
-          ls -la /usr/lib/android-sdk 2>/dev/null || true
-
       - name: Szablony eksportu
         run: |
-          # W kontenerze GitHub Actions HOME bywa inny niż /root
           if [ "$HOME" != "/root" ]; then
             mkdir -p ~/.local/share/godot/export_templates
-            cp -r /root/.local/share/godot/export_templates/* ~/.local/share/godot/export_templates/
+            cp -r /root/.local/share/godot/export_templates/${GODOT_VERSION}.stable ~/.local/share/godot/export_templates/
           fi
-          ls -la ~/.local/share/godot/export_templates/
 
       - name: Debug keystore
         run: |
           keytool -keyalg RSA -genkeypair -alias androiddebugkey \
-            -keypass android -keystore "$HOME/debug.keystore" -storepass android \
+            -keypass android -keystore $HOME/debug.keystore -storepass android \
             -dname "CN=Android Debug,O=Android,C=US" -validity 9999 -deststoretype pkcs12
 
-      - name: Ustawienia edytora (Android SDK + Java + keystore)
+      - name: Ustawienia edytora (Android SDK + keystore)
         run: |
-          SDK="${ANDROID_HOME:-${ANDROID_SDK_ROOT:-/usr/lib/android-sdk}}"
-          # Ścieżka do JDK: z JAVA_HOME albo wykryta na podstawie javac / keytool
-          if [ -n "$JAVA_HOME" ] && [ -x "$JAVA_HOME/bin/javac" ]; then
-            JDK="$JAVA_HOME"
-          else
-            BIN="$(command -v javac || command -v keytool)"
-            JDK="$(dirname "$(dirname "$(readlink -f "$BIN")")")"
-          fi
-          echo "Android SDK: $SDK"
-          echo "Java JDK:    $JDK"
-          ls "$JDK/bin" | head -20
           mkdir -p ~/.config/godot
           godot --headless --editor --quit || true
           if ! ls ~/.config/godot/editor_settings-*.tres >/dev/null 2>&1; then
             printf '[gd_resource type="EditorSettings" format=3]\n\n[resource]\n' > ~/.config/godot/editor_settings-4.tres
           fi
           for f in ~/.config/godot/editor_settings-*.tres; do
-            echo "export/android/android_sdk_path = \"$SDK\"" >> "$f"
-            echo "export/android/java_sdk_path = \"$JDK\"" >> "$f"
+            echo 'export/android/android_sdk_path = "/usr/lib/android-sdk"' >> "$f"
             echo "export/android/debug_keystore = \"$HOME/debug.keystore\"" >> "$f"
             echo 'export/android/debug_keystore_user = "androiddebugkey"' >> "$f"
             echo 'export/android/debug_keystore_pass = "android"' >> "$f"
             echo 'export/android/shutdown_adb_on_exit = true' >> "$f"
+            if [ -n "$JAVA_HOME" ]; then echo "export/android/java_sdk_path = \"$JAVA_HOME\"" >> "$f"; fi
           done
-          tail -n 8 ~/.config/godot/editor_settings-*.tres
 
       - name: Import zasobów
         run: godot --headless --verbose --import || true
