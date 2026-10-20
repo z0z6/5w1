@@ -112,6 +112,30 @@ func _songs() -> Dictionary:
 				"D6 _ _ _ B5 _ _ _ G5 _ _ _ D5 _ - -",
 			],
 		},
+		# Sirtet: dynamiczny, C-moll, 140 BPM (oryginalna melodia)
+		"sirtet": {
+			"bpm": 140, "lead_duty": 0.125, "lead_vol": 0.19, "arp": [0, 1, 2, 1], "arp_vol": 0.09,
+			"kick": "k...k...k...k...", "snare": "....s.......s...", "hat": "h.h.h.h.h.h.h.hH",
+			"chords": ["Cm", "Ab", "Eb", "Bb", "Cm", "Ab", "Bb", "G7", "Fm", "Cm", "Ab", "Bb", "Cm", "Ab", "Bb", "G7"],
+			"lead": [
+				"G5 _ C6 _ Eb6 _ D6 _ C6 _ G5 _ Eb5 _ G5 _",
+				"Eb6 _ C6 _ Ab5 _ C6 _ Eb6 _ F6 _ Eb6 _ C6 _",
+				"G5 _ Bb5 _ Eb6 _ Bb5 _ G5 _ Bb5 _ Eb6 _ G6 _",
+				"F6 _ D6 _ Bb5 _ D6 _ F6 _ D6 _ Bb5 _ F5 _",
+				"C6 _ _ G5 _ C6 _ Eb6 _ G6 _ _ F6 _ Eb6 _",
+				"Eb6 _ _ C6 _ Eb6 _ Ab6 _ G6 _ _ Eb6 _ C6 _",
+				"D6 _ _ Bb5 _ D6 _ F6 _ Bb6 _ _ A6 _ F6 _",
+				"D6 _ B5 _ G5 _ B5 _ D6 _ F6 _ G6 _ _ _",
+				"F6 _ Ab6 _ C7 _ Ab6 _ F6 _ Ab6 _ C7 _ _ _",
+				"G6 _ Eb6 _ C6 _ Eb6 _ G6 _ C7 _ Bb6 _ G6 _",
+				"Ab6 _ _ Eb6 _ C6 _ Eb6 _ Ab6 _ _ G6 _ Eb6 _",
+				"F6 _ _ D6 _ Bb5 _ D6 _ F6 _ _ D6 _ Bb5 _",
+				"C6 _ Eb6 _ G6 _ Eb6 _ C6 _ G5 _ C6 _ Eb6 _",
+				"Ab5 _ C6 _ Eb6 _ C6 _ Ab5 _ Eb6 _ Ab6 _ Eb6 _",
+				"Bb5 _ D6 _ F6 _ D6 _ Bb5 _ F6 _ Bb6 _ F6 _",
+				"G6 _ _ _ F6 _ D6 _ B5 _ _ _ G5 _ - -",
+			],
+		},
 	}
 
 func _gen_music() -> void:
@@ -381,3 +405,36 @@ func _gen_sfx() -> void:
 	S.tone(b, 0, 0.15, 880, 1760, S.SQUARE, 0.45, 0.25, 0.001, 0.02)
 	S.tone(b, 0.15, 0.28, 1760, 1760, S.SQUARE, 0.45, 0.5, 0.001, 0.12, 4.0)
 	_save("booster", b, 0.7)
+
+	# --- Sirtet
+	b = S.new_buf(0.07)
+	S.tone(b, 0, 0.05, 700, 1100, S.SQUARE, 0.45, 0.5, 0.001, 0.02)
+	_save("rot", b, 0.55)
+	b = S.new_buf(0.15)
+	S.noise(b, 0, 0.05, 0.5, 50.0, 0.6)
+	S.tone(b, 0, 0.1, 160, 80, S.TRI, 0.6, 0.5, 0.001, 0.04, 0.0, 0.0, 6.0, 7.5)
+	_save("lock", b, 0.7)
+	b = S.new_buf(0.25)
+	S.noise(b, 0, 0.1, 0.6, 30.0, 0.9)
+	S.tone(b, 0, 0.18, 240, 55, S.SINE, 0.7, 0.5, 0.001, 0.06, 4.0)
+	_save("hard", b, 0.85)
+	b = S.new_buf(0.4)
+	for i in 4:
+		var f := S.midi_freq(S.note_midi(["G5", "C6", "E6", "G6"][i]))
+		S.tone(b, i * 0.055, 0.1, f, f, S.SQUARE, 0.4, 0.25, 0.001, 0.03)
+	S.tone(b, 0.2, 0.18, 2093, 2093, S.SINE, 0.25, 0.5, 0.001, 0.08, 9.0)
+	_save("line", b, 0.75)
+	b = S.new_buf(1.0)
+	var qn := ["C5", "G5", "C6", "E6", "G6", "C7"]
+	for i in qn.size():
+		var f := S.midi_freq(S.note_midi(qn[i]))
+		S.tone(b, i * 0.06, 0.12, f, f, S.SQUARE, 0.4, 0.25, 0.002, 0.03)
+	for n in ["C6", "E6", "G6"]:
+		var f := S.midi_freq(S.note_midi(n))
+		S.tone(b, 0.4, 0.55, f, f, S.SQUARE, 0.22, 0.25, 0.004, 0.25, 1.8, 0.006, 5.5)
+	S.noise(b, 0, 0.35, 0.4, 6.0, 0.9, true)
+	_save("quad", b, 0.9)
+	b = S.new_buf(0.15)
+	S.tone(b, 0, 0.05, 500, 400, S.SQUARE, 0.45, 0.5, 0.001, 0.01)
+	S.tone(b, 0.06, 0.07, 400, 650, S.SQUARE, 0.45, 0.5, 0.001, 0.02)
+	_save("hold", b, 0.55)
