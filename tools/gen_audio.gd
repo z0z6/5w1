@@ -63,6 +63,55 @@ func _songs() -> Dictionary:
 				"E6 _ _ _ _ _ _ _ B5 _ _ _ G5 _ - -",
 			],
 		},
+		# Pinball: szybki, D-moll, 150 BPM
+		"pinball": {
+			"bpm": 150, "lead_duty": 0.25, "lead_vol": 0.20, "arp": [0, 1, 2, 1], "arp_vol": 0.09,
+			"bass": [1, 0, 1, 0, 2, 0, 1, 0, 1, 0, 1, 0, 2, 0, 3, 0],
+			"kick": "k...k...k...k...", "snare": "....s.......s...", "hat": "h.h.h.h.h.h.h.hH",
+			"chords": ["Dm", "Bb", "F", "C", "Dm", "Bb", "C", "A7", "Dm", "Gm", "Bb", "C", "Dm", "Gm", "A7", "Dm"],
+			"lead": [
+				"A5 _ _ D6 _ _ F6 _ E6 _ D6 _ A5 _ _ _",
+				"D6 _ _ F6 _ _ E6 _ D6 _ Bb5 _ D6 _ _ _",
+				"C6 _ _ F6 _ _ A6 _ G6 _ F6 _ C6 _ _ _",
+				"E6 _ _ G6 _ _ E6 _ C6 _ D6 _ E6 _ _ _",
+				"F6 _ A6 _ F6 _ D6 _ A5 _ D6 _ F6 _ _ _",
+				"D6 _ F6 _ Bb6 _ F6 _ D6 _ F6 _ D6 _ _ _",
+				"G6 _ _ E6 _ _ C6 _ E6 _ G6 _ C7 _ _ _",
+				"C#6 _ E6 _ A6 _ G6 _ E6 _ C#6 _ A5 _ - -",
+				"D6 _ _ _ A5 _ D6 _ F6 _ _ _ A6 _ F6 _",
+				"G5 _ _ _ Bb5 _ D6 _ G6 _ _ _ F6 _ D6 _",
+				"Bb5 _ _ _ D6 _ F6 _ Bb6 _ _ _ A6 _ F6 _",
+				"C6 _ _ _ E6 _ G6 _ C7 _ _ _ B6 _ G6 _",
+				"A6 _ F6 _ D6 _ F6 _ A6 _ D7 _ C7 _ A6 _",
+				"G6 _ D6 _ Bb5 _ D6 _ G6 _ Bb6 _ A6 _ G6 _",
+				"E6 _ _ _ C#6 _ A5 _ E6 _ G6 _ A6 _ C#7 _",
+				"D7 _ _ _ _ _ _ _ A6 _ _ _ F6 _ - -",
+			],
+		},
+		# Chip Match: lekki, C-dur, 124 BPM
+		"match3": {
+			"bpm": 124, "lead_duty": 0.25, "lead_vol": 0.19, "arp": [0, 1, 2, 1], "arp_vol": 0.09,
+			"kick": "k.......k.......", "snare": "........s.......", "hat": "h...h...h...h...",
+			"chords": ["C", "Am", "F", "G", "C", "Am", "Dm", "G", "F", "G", "Em", "Am", "F", "G", "C", "G"],
+			"lead": [
+				"E5 _ G5 _ C6 _ B5 _ G5 _ E5 _ G5 _ _ _",
+				"A5 _ C6 _ E6 _ D6 _ C6 _ A5 _ C6 _ _ _",
+				"A5 _ C6 _ F6 _ E6 _ C6 _ A5 _ F5 _ _ _",
+				"G5 _ B5 _ D6 _ C6 _ B5 _ G5 _ D5 _ _ _",
+				"E6 _ _ D6 _ C6 _ G5 _ C6 _ E6 _ _ - -",
+				"E6 _ _ C6 _ A5 _ C6 _ E6 _ A6 _ _ - -",
+				"F6 _ _ D6 _ A5 _ D6 _ F6 _ A6 _ _ - -",
+				"G6 _ _ D6 _ B5 _ D6 _ G6 _ B6 _ _ - -",
+				"C6 _ A5 _ C6 _ F6 _ C6 _ A5 _ C6 _ _ _",
+				"B5 _ G5 _ B5 _ D6 _ B5 _ G5 _ B5 _ _ _",
+				"G5 _ B5 _ E6 _ B5 _ G5 _ B5 _ E6 _ _ _",
+				"A5 _ C6 _ E6 _ C6 _ A5 _ C6 _ E6 _ _ _",
+				"F6 _ _ E6 _ D6 _ C6 _ A5 _ C6 _ F6 _ _",
+				"G6 _ _ F6 _ D6 _ B5 _ D6 _ G6 _ _ - -",
+				"E6 _ _ _ G6 _ _ _ C7 _ _ _ G6 _ E6 _",
+				"D6 _ _ _ B5 _ _ _ G5 _ _ _ D5 _ - -",
+			],
+		},
 	}
 
 func _gen_music() -> void:
@@ -246,3 +295,89 @@ func _gen_sfx() -> void:
 	S.tone(b, 0, 0.5, 1400, 1400, S.SINE, 0.6, 0.5, 0.002, 0.2, 7.0)
 	S.tone(b, 0.28, 0.5, 1400, 1400, S.SINE, 0.25, 0.5, 0.002, 0.2, 9.0)
 	_save("scan", b, 0.7)
+
+	# --- Pinball
+	b = S.new_buf(0.12)
+	S.noise(b, 0, 0.04, 0.6, 60.0, 0.5)
+	S.tone(b, 0, 0.09, 150, 70, S.SQUARE, 0.55, 0.5, 0.001, 0.03)
+	_save("flipper", b, 0.8)
+	b = S.new_buf(0.22)
+	S.tone(b, 0, 0.1, 500, 1300, S.SQUARE, 0.5, 0.25, 0.001, 0.03)
+	S.tone(b, 0.05, 0.14, 1300, 700, S.SQUARE, 0.3, 0.5, 0.001, 0.05)
+	S.noise(b, 0, 0.03, 0.4, 70.0, 1.0, true)
+	_save("bumper", b, 0.85)
+	b = S.new_buf(0.15)
+	S.tone(b, 0, 0.08, 900, 300, S.SQUARE, 0.5, 0.125, 0.001, 0.03)
+	S.noise(b, 0, 0.04, 0.5, 60.0, 0.8, true)
+	_save("sling", b, 0.8)
+	b = S.new_buf(0.3)
+	S.tone(b, 0, 0.25, 1568, 1568, S.SINE, 0.6, 0.5, 0.001, 0.1, 9.0)
+	S.tone(b, 0, 0.2, 2093, 2093, S.SINE, 0.25, 0.5, 0.001, 0.1, 11.0)
+	_save("target", b, 0.75)
+	b = S.new_buf(0.2)
+	S.tone(b, 0, 0.06, 880, 880, S.SQUARE, 0.45, 0.25, 0.001, 0.02)
+	S.tone(b, 0.07, 0.1, 1175, 1175, S.SQUARE, 0.45, 0.25, 0.001, 0.04)
+	_save("rollover", b, 0.65)
+	b = S.new_buf(0.8)
+	S.noise(b, 0, 0.7, 0.5, 3.0, 0.15)
+	S.tone(b, 0, 0.7, 120, 900, S.SAW, 0.35, 0.5, 0.01, 0.15)
+	_save("launch", b, 0.85)
+	b = S.new_buf(1.0)
+	S.tone(b, 0, 0.8, 440, 60, S.SAW, 0.5, 0.5, 0.002, 0.15, 1.2, 0.02, 7.0)
+	S.tone(b, 0, 0.8, 330, 50, S.SQUARE, 0.3, 0.125, 0.002, 0.15, 1.2)
+	_save("drain", b, 0.85)
+	b = S.new_buf(1.2)
+	var mn := ["D5", "F5", "A5", "D6", "F6", "A6", "D7"]
+	for i in mn.size():
+		var f := S.midi_freq(S.note_midi(mn[i]))
+		S.tone(b, i * 0.07, 0.12, f, f, S.SQUARE, 0.4, 0.25, 0.002, 0.03)
+	for n in ["D6", "F6", "A6"]:
+		var f := S.midi_freq(S.note_midi(n))
+		S.tone(b, 0.5, 0.6, f, f, S.SQUARE, 0.22, 0.25, 0.004, 0.25, 1.5, 0.006, 5.5)
+	_save("multi", b, 0.85)
+	b = S.new_buf(0.9)
+	S.tone(b, 0, 0.8, 90, 90, S.SQUARE, 0.5, 0.25, 0.005, 0.1, 0.0, 0.05, 25.0)
+	S.noise(b, 0, 0.8, 0.35, 2.0, 0.3)
+	S.tone(b, 0, 0.8, 60, 55, S.SAW, 0.4, 0.5, 0.005, 0.1)
+	_save("tilt", b, 0.9)
+	b = S.new_buf(0.06)
+	S.tone(b, 0, 0.04, 1400, 1400, S.SQUARE, 0.4, 0.5, 0.0005, 0.01)
+	_save("tick", b, 0.5)
+
+	# --- Chip Match
+	b = S.new_buf(0.08)
+	S.tone(b, 0, 0.06, 500, 800, S.SQUARE, 0.5, 0.5, 0.001, 0.02)
+	_save("swap", b, 0.55)
+	b = S.new_buf(0.2)
+	S.tone(b, 0, 0.14, 300, 140, S.SQUARE, 0.5, 0.125, 0.001, 0.04)
+	S.noise(b, 0, 0.05, 0.3, 50.0, 0.7)
+	_save("bad", b, 0.65)
+	b = S.new_buf(0.4)
+	S.tone(b, 0, 0.35, 1047, 1047, S.SINE, 0.6, 0.5, 0.001, 0.15, 7.0)
+	S.tone(b, 0, 0.12, 2093, 2093, S.SQUARE, 0.16, 0.25, 0.001, 0.05, 12.0)
+	_save("match", b, 0.7)
+	b = S.new_buf(0.5)
+	for i in 5:
+		var f := S.midi_freq(S.note_midi(["G5", "C6", "E6", "G6", "C7"][i]))
+		S.tone(b, i * 0.05, 0.09, f, f, S.SQUARE, 0.4, 0.25, 0.001, 0.02)
+	S.tone(b, 0.25, 0.25, 2093, 2093, S.SINE, 0.3, 0.5, 0.001, 0.1, 8.0)
+	_save("special", b, 0.8)
+	b = S.new_buf(0.6)
+	S.noise(b, 0, 0.45, 0.6, 5.0, 0.9, true)
+	S.tone(b, 0, 0.4, 2200, 180, S.SAW, 0.5, 0.5, 0.001, 0.1)
+	for i in 4:
+		S.noise(b, 0.04 + i * 0.07, 0.02, 0.5, 90.0, 1.0, true)
+	_save("blast", b, 0.9)
+	b = S.new_buf(1.0)
+	S.tone(b, 0, 0.8, 160, 40, S.TRI, 0.8, 0.5, 0.002, 0.2, 2.0, 0.0, 6.0, 7.5)
+	S.noise(b, 0, 0.7, 0.5, 3.5, 0.25)
+	S.tone(b, 0, 0.4, 300, 3000, S.SAW, 0.3, 0.5, 0.002, 0.1)
+	_save("emp", b, 0.95)
+	b = S.new_buf(0.6)
+	S.noise(b, 0, 0.5, 0.5, 2.0, 0.15)
+	S.tone(b, 0, 0.5, 300, 900, S.SINE, 0.3, 0.5, 0.01, 0.1, 0.0, 0.05, 14.0)
+	_save("shuffle", b, 0.7)
+	b = S.new_buf(0.45)
+	S.tone(b, 0, 0.15, 880, 1760, S.SQUARE, 0.45, 0.25, 0.001, 0.02)
+	S.tone(b, 0.15, 0.28, 1760, 1760, S.SQUARE, 0.45, 0.5, 0.001, 0.12, 4.0)
+	_save("booster", b, 0.7)

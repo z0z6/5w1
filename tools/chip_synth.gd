@@ -46,6 +46,9 @@ static func chord_notes(name: String, base_oct: int) -> Array[int]:
 	if name.length() > 1 and name[1] == "#":
 		pc += 1
 		idx = 2
+	elif name.length() > 1 and name[1] == "b":
+		pc -= 1
+		idx = 2
 	var q := name.substr(idx)
 	var iv: Array[int] = [0, 4, 7]
 	if q == "m":
