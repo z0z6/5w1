@@ -1,8 +1,10 @@
 class_name MazeLevels
 extends RefCounted
-## Poziomy: 1 = ręcznie zrobiony, kolejne = generowane (zawsze przechodnie).
-## Znaki: # ściana, . podłoga, S start, G cel (CPU), O otwór montażowy (pułapka)
+## 30 poziomów: 1 = ręczny, 2-30 = generowane (zawsze przechodnie).
+## Znaki: # ściana, . podłoga, S start, G cel (CPU), O otwór (pułapka),
+##        Z zwarcie (okresowy łuk elektryczny na ścieżce)
 
+const COUNT := 30
 const DIRS: Array[Vector2i] = [Vector2i(1, 0), Vector2i(-1, 0), Vector2i(0, 1), Vector2i(0, -1)]
 
 const LEVEL_1: Array = [
@@ -48,11 +50,18 @@ static func _bfs(g: Array, w: int, h: int, s: Vector2i, goal: Vector2i, blocked:
 			q.append(n2)
 	return prev
 
+static func _open_neighbors(g: Array, p: Vector2i) -> int:
+	var k := 0
+	for d in DIRS:
+		if g[p.y + d.y][p.x + d.x] == 0:
+			k += 1
+	return k
+
 static func _generate(n: int) -> Array:
 	var rng := RandomNumberGenerator.new()
 	rng.seed = 7919 * n + 13
-	var cw := mini(4 + n, 8)
-	var ch := mini(6 + n * 2, 12)
+	var cw := clampi(5 + floori(n / 6.0), 5, 8)
+	var ch := clampi(7 + floori(n / 3.0), 7, 12)
 	var w := cw * 2 + 1
 	var h := ch * 2 + 1
 
@@ -90,27 +99,65 @@ static func _generate(n: int) -> Array:
 		if (x + y) % 2 == 1:
 			g[y][x] = 0
 
+	# Otwarte "pokoje" 3x3 (od poziomu 5) - tu holes są naprawdę groźne
+	var room_cells := {}
+	if n >= 5:
+		var rooms := clampi(floori((n - 3) / 6.0), 1, 3)
+		for i in rooms:
+			var rx := rng.randi_range(2, w - 5)
+			var ry := rng.randi_range(3, h - 6)
+			for yy in range(ry, ry + 3):
+				for xx in range(rx, rx + 3):
+					g[yy][xx] = 0
+					room_cells[Vector2i(xx, yy)] = true
+
 	var s := Vector2i(1, 1)
 	var goal := Vector2i(w - 2, h - 2)
 
 	# Najkrótsza ścieżka
 	var prev := _bfs(g, w, h, s, goal, {})
 	var path := {s: true}
+	var path_list: Array[Vector2i] = []
 	var c2 := goal
 	while c2 != s:
 		path[c2] = true
+		path_list.append(c2)
 		c2 = prev[c2]
 
-	# Kandydaci na otwory: na ścieżce lub obok niej, z dala od startu i celu
+	# Zwarcia (Z): na ścieżce, w korytarzach (2 sąsiedzi), z dala od startu/celu
+	var shorts := {}
+	var want_z := clampi(floori((n - 1) / 3.0), 0, 7) if n >= 3 else 0
+	var z_cand: Array[Vector2i] = []
+	for p in path_list:
+		if absi(p.x - s.x) + absi(p.y - s.y) <= 4 or absi(p.x - goal.x) + absi(p.y - goal.y) <= 3:
+			continue
+		if _open_neighbors(g, p) == 2 and not room_cells.has(p):
+			z_cand.append(p)
+	for i in range(z_cand.size() - 1, 0, -1):
+		var j := rng.randi_range(0, i)
+		var tmp := z_cand[i]
+		z_cand[i] = z_cand[j]
+		z_cand[j] = tmp
+	for p in z_cand:
+		if shorts.size() >= want_z:
+			break
+		var far := true
+		for q in shorts:
+			if absi(p.x - q.x) + absi(p.y - q.y) < 5:
+				far = false
+		if far:
+			shorts[p] = true
+
+	# Kandydaci na otwory: pokoje + ścieżka i jej sąsiedztwo, z dala od startu i celu
 	var cand: Array[Vector2i] = []
 	for y in range(1, h - 1):
 		for x in range(1, w - 1):
 			var p := Vector2i(x, y)
-			if g[y][x] != 0:
+			if g[y][x] != 0 or shorts.has(p):
 				continue
 			if absi(x - s.x) + absi(y - s.y) <= 4 or absi(x - goal.x) + absi(y - goal.y) <= 2:
 				continue
-			var near := path.has(p)
+			var near := path.has(p) or room_cells.has(p)
 			for d in DIRS:
 				if path.has(p + d):
 					near = true
@@ -123,7 +170,7 @@ static func _generate(n: int) -> Array:
 		cand[j] = tmp
 
 	var holes := {}
-	var want := mini(2 + n * 2, 14)
+	var want := clampi(1 + floori(n / 2.0), 2, 14)
 	for p in cand:
 		if holes.size() >= want:
 			break
@@ -142,6 +189,8 @@ static func _generate(n: int) -> Array:
 				line += "G"
 			elif holes.has(p):
 				line += "O"
+			elif shorts.has(p):
+				line += "Z"
 			elif g[y][x] == 1:
 				line += "#"
 			else:

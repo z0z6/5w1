@@ -8,7 +8,7 @@ func _ready() -> void:
 	cfg.load(PATH)
 
 func get_best(game: String, key: String) -> float:
-	return cfg.get_value(game, key, 0.0)
+	return float(cfg.get_value(game, key, 0.0))
 
 ## Zwraca true, jeśli to nowy rekord.
 func submit_time(game: String, key: String, t: float) -> bool:
@@ -18,3 +18,10 @@ func submit_time(game: String, key: String, t: float) -> bool:
 		cfg.save(PATH)
 		return true
 	return false
+
+func get_int(section: String, key: String, default := 0) -> int:
+	return int(cfg.get_value(section, key, default))
+
+func set_int(section: String, key: String, value: int) -> void:
+	cfg.set_value(section, key, value)
+	cfg.save(PATH)

@@ -10,6 +10,8 @@ const GAMES := [
 	{"name": "Gra nr 5", "scene": "res://games/game5/game5.tscn", "sub": "wkrótce"},
 ]
 
+var panel: OptionsPanel
+
 func _ready() -> void:
 	var bg := ColorRect.new()
 	bg.color = Color("07140e")
@@ -20,9 +22,9 @@ func _ready() -> void:
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	box.offset_left = 50
 	box.offset_right = -50
-	box.offset_top = 120
-	box.offset_bottom = -60
-	box.add_theme_constant_override("separation", 26)
+	box.offset_top = 80
+	box.offset_bottom = -50
+	box.add_theme_constant_override("separation", 20)
 	add_child(box)
 
 	var title := Label.new()
@@ -33,39 +35,47 @@ func _ready() -> void:
 	box.add_child(title)
 
 	var sub := Label.new()
-	sub.text = "5 w 1  •  rev 1.0"
+	sub.text = "5 w 1  •  rev 1.1"
 	sub.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	sub.add_theme_font_size_override("font_size", 30)
 	sub.add_theme_color_override("font_color", Color("4fbf7f"))
 	box.add_child(sub)
 
 	var spacer := Control.new()
-	spacer.custom_minimum_size = Vector2(0, 30)
+	spacer.custom_minimum_size = Vector2(0, 16)
 	box.add_child(spacer)
 
 	for g in GAMES:
 		var b := Button.new()
 		var is_ready: bool = ResourceLoader.exists(g.scene)
 		b.text = "%s\n%s" % [g.name, g.sub]
-		b.custom_minimum_size = Vector2(0, 150)
+		b.custom_minimum_size = Vector2(0, 122)
 		b.disabled = not is_ready
-		b.add_theme_font_size_override("font_size", 38)
-		_style(b)
+		UiKit.style_button(b, 36)
 		if is_ready:
 			b.pressed.connect(func(): get_tree().change_scene_to_file(g.scene))
 		box.add_child(b)
 
-func _style(b: Button) -> void:
-	for state in ["normal", "hover", "pressed", "disabled"]:
-		var sb := StyleBoxFlat.new()
-		sb.bg_color = Color("0d3a24") if state != "pressed" else Color("14583a")
-		if state == "disabled":
-			sb.bg_color = Color("0a1d14")
-		sb.border_color = Color("c98a4a") if state != "disabled" else Color("4a3a28")
-		sb.set_border_width_all(4)
-		sb.set_corner_radius_all(14)
-		b.add_theme_stylebox_override(state, sb)
+	var opt := Button.new()
+	opt.text = "Opcje"
+	opt.custom_minimum_size = Vector2(0, 90)
+	UiKit.style_button(opt, 34)
+	opt.pressed.connect(_open_options)
+	box.add_child(opt)
+
+func _open_options() -> void:
+	if panel:
+		return
+	panel = OptionsPanel.new()
+	panel.closed.connect(func():
+		panel.queue_free()
+		panel = null)
+	add_child(panel)
 
 func _notification(what: int) -> void:
 	if what == NOTIFICATION_WM_GO_BACK_REQUEST:
-		get_tree().quit()
+		if panel:
+			panel.queue_free()
+			panel = null
+		else:
+			get_tree().quit()

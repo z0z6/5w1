@@ -14,3 +14,12 @@ Otwórz w Godot 4.4.x. Na PC steruj strzałkami.
 Przyciski w grze: **Kalibruj** (ustaw aktualne trzymanie telefonu jako „poziom") oraz
 **Osie ++ / +- / -+ / --** (odwracanie osi X/Y, jeśli kulka jedzie w złą stronę).
 Stała siła: `TILT_FORCE` w `marble_maze.gd`; czułość: `Settings.sensitivity`.
+
+## Opcje (menu główne i w grze)
+Wibracje, efekty (iskry / płynący prąd / zwarcia), odwrócenie osi X i Y, czułość, podgląd danych czujnika.
+Wszystko zapisuje się od razu w `user://settings.cfg` i wraca po restarcie aplikacji.
+
+## Marble Maze
+30 poziomów (przycisk „Poziomy"; kolejne odblokowują się po ukończeniu poprzedniego), 12 rodzajów elementów
+elektronicznych jako ściany, otwory montażowe oraz **zwarcia** - okresowe łuki elektryczne na ścieżce
+(porażenie = odrzut kulki + 2 s kary).
