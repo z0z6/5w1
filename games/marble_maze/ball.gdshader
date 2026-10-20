@@ -2,7 +2,7 @@ shader_type spatial;
 // Fluorescencyjna, silnie naelektryzowana kulka: świecąca powłoka + gęste migoczące
 // ładunki + trzaskająca korona na obrzeżu. charge (0..1) - poziom naładowania, flash - błysk po wyładowaniu.
 
-uniform vec3 body_color : source_color = vec3(0.1, 0.85, 1.0);
+uniform vec3 body_color : source_color = vec3(1.0, 0.06, 0.04);
 uniform float charge = 0.3;
 uniform float flash = 0.0;
 
@@ -32,7 +32,7 @@ void fragment() {
 		float h = hash3(id + vec3(st * 0.37, st * 0.11, float(i)));
 		float on = step(1.0 - (0.06 + 0.18 * charge), h);
 		float dotv = on * smoothstep(0.42, 0.03, length(f));
-		vec3 c = mix(vec3(0.6, 1.0, 1.0), vec3(1.0, 0.55, 1.0), fract(h * 7.0));
+		vec3 c = mix(vec3(1.0, 0.95, 0.75), vec3(1.0, 0.62, 0.25), fract(h * 7.0));
 		sparks += c * dotv;
 	}
 	float fres = pow(1.0 - clamp(dot(NORMAL, VIEW), 0.0, 1.0), 2.5);

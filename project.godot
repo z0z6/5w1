@@ -4,15 +4,20 @@ config_version=5
 [application]
 
 config/name="Retro Arcade"
-run/main_scene="res://main_menu/main_menu.tscn"
+run/main_scene="res://intro/intro.tscn"
 config/features=PackedStringArray("4.4", "Mobile")
 config/quit_on_go_back=false
-config/icon="res://icon.svg"
+config/icon="res://icons/icon.png"
+boot_splash/bg_color=Color(0.039, 0.016, 0.125, 1)
+boot_splash/image="res://icons/splash.png"
+boot_splash/fullsize=false
+boot_splash/use_filter=false
 
 [autoload]
 
 Settings="*res://autoload/settings.gd"
 Save="*res://autoload/save.gd"
+Audio="*res://autoload/audio.gd"
 
 [display]
 
@@ -21,6 +26,10 @@ window/size/viewport_height=1280
 window/stretch/mode="canvas_items"
 window/stretch/aspect="expand"
 window/handheld/orientation=1
+
+[gui]
+
+theme/custom_font="res://fonts/PressStart2P-Regular.ttf"
 
 [input_devices]
 
@@ -37,5 +46,6 @@ common/physics_ticks_per_second=120
 [rendering]
 
 renderer/rendering_method="mobile"
+environment/defaults/default_clear_color=Color(0.039, 0.016, 0.125, 1)
 textures/vram_compression/import_etc2_astc=true
 anti_aliasing/quality/msaa_3d=2

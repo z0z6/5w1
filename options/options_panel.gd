@@ -11,80 +11,74 @@ func _init() -> void:
 
 func _ready() -> void:
 	var dim := ColorRect.new()
-	dim.color = Color(0.0, 0.03, 0.02, 0.92)
+	dim.color = Color(0.03, 0.0, 0.1, 0.94)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	add_child(dim)
 
 	var box := VBoxContainer.new()
 	box.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
-	box.offset_left = 50
-	box.offset_right = -50
-	box.offset_top = 90
-	box.offset_bottom = -60
+	box.offset_left = 36
+	box.offset_right = -36
+	box.offset_top = 70
+	box.offset_bottom = -50
 	box.add_theme_constant_override("separation", 14)
 	add_child(box)
 
-	var title := Label.new()
-	title.text = "OPCJE"
+	var title := UiKit.label("OPCJE", 40, UiKit.C_YELLOW, 8)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 60)
-	title.add_theme_color_override("font_color", Color("d9a066"))
 	box.add_child(title)
 
-	_toggle(box, "Wibracje", "vibration")
-	_toggle(box, "Efekty (iskry, prąd, zwarcia)", "effects")
-	_toggle(box, "Odwróć oś X (lewo / prawo)", "invert_x")
-	_toggle(box, "Odwróć oś Y (góra / dół)", "invert_y")
-	_toggle(box, "Pokaż dane czujnika", "show_debug")
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 12)
+	scroll.add_child(list)
 
-	var sens := Label.new()
-	sens.add_theme_font_size_override("font_size", 30)
-	sens.text = "Czułość przechyłu: %.2f" % Settings.sensitivity
-	box.add_child(sens)
-	var sl := HSlider.new()
-	sl.min_value = 0.5
-	sl.max_value = 1.6
-	sl.step = 0.05
-	sl.value = Settings.sensitivity
-	sl.custom_minimum_size = Vector2(0, 60)
-	sl.value_changed.connect(func(v: float):
-		Settings.sensitivity = v
-		sens.text = "Czułość przechyłu: %.2f" % v)
-	sl.drag_ended.connect(func(_changed: bool): Settings.save())
-	box.add_child(sl)
-
+	_section(list, "DŹWIĘK")
+	_toggle(list, "Muzyka", "music")
+	_slider(list, "Głośność muzyki", "music_vol", 0.0, 1.0, 0.05)
+	_toggle(list, "Efekty dźwiękowe", "sounds")
+	_slider(list, "Głośność efektów", "sfx_vol", 0.0, 1.0, 0.05)
+	_section(list, "STEROWANIE")
+	_toggle(list, "Odwróć oś X", "invert_x")
+	_toggle(list, "Odwróć oś Y", "invert_y")
+	_slider(list, "Czułość przechyłu", "sensitivity", 0.5, 1.6, 0.05)
+	_toggle(list, "Dane czujnika", "show_debug")
+	_section(list, "EFEKTY")
+	_toggle(list, "Iskry, prąd, zwarcia", "effects")
+	_toggle(list, "Wibracje", "vibration")
 	var test := Button.new()
 	test.text = "Test wibracji"
-	test.custom_minimum_size = Vector2(0, 90)
-	UiKit.style_button(test, 32)
-	test.pressed.connect(func(): Settings.vibrate(80))
-	box.add_child(test)
-
-	var spacer := Control.new()
-	spacer.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	box.add_child(spacer)
+	test.custom_minimum_size = Vector2(0, 76)
+	UiKit.style_button(test, 16, UiKit.C_MAGENTA)
+	test.pressed.connect(func():
+		Audio.play_sfx("click")
+		Settings.vibrate(80))
+	list.add_child(test)
 
 	var ok := Button.new()
-	ok.text = "Gotowe"
-	ok.custom_minimum_size = Vector2(0, 110)
-	UiKit.style_button(ok, 40)
+	ok.text = "GOTOWE"
+	ok.custom_minimum_size = Vector2(0, 96)
+	UiKit.style_button(ok, 24, UiKit.C_GREEN)
 	ok.pressed.connect(_close)
 	box.add_child(ok)
+
+func _section(parent: Node, text: String) -> void:
+	var l := UiKit.label("- %s -" % text, 16, UiKit.C_MAGENTA)
+	l.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	l.custom_minimum_size = Vector2(0, 34)
+	parent.add_child(l)
 
 func _toggle(parent: Node, text: String, key: String) -> void:
 	# Duży przycisk-przełącznik, czytelny na telefonie: zielony = włączone
 	var b := Button.new()
 	b.toggle_mode = true
 	b.button_pressed = Settings.get(key)
-	b.custom_minimum_size = Vector2(0, 84)
-	UiKit.style_button(b, 30)
-	var on := StyleBoxFlat.new()
-	on.bg_color = Color("1b8a50")
-	on.border_color = Color("c98a4a")
-	on.set_border_width_all(3)
-	on.set_corner_radius_all(12)
-	b.add_theme_stylebox_override("pressed", on)
-	b.add_theme_stylebox_override("hover_pressed", on)
+	b.custom_minimum_size = Vector2(0, 76)
+	UiKit.style_toggle(b, 16)
 	_set_toggle_text(b, text, b.button_pressed)
 	b.toggled.connect(func(v: bool):
 		_set_toggle_text(b, text, v)
@@ -92,14 +86,36 @@ func _toggle(parent: Node, text: String, key: String) -> void:
 	parent.add_child(b)
 
 func _set_toggle_text(b: Button, text: String, on: bool) -> void:
-	b.text = "%s:  %s" % [text, "WŁ" if on else "WYŁ"]
+	b.text = "%s: %s" % [text, "WŁ" if on else "WYŁ"]
 
 func _on_toggle(key: String, value: bool) -> void:
 	Settings.set(key, value)
 	Settings.save()
+	if key == "music" or key == "sounds":
+		Audio.apply_settings()
+	Audio.play_sfx("toggle_on" if value else "toggle_off")
 	if key == "vibration" and value:
 		Settings.vibrate(40)
 
+func _slider(parent: Node, text: String, key: String, lo: float, hi: float, stp: float) -> void:
+	var l := UiKit.label("%s: %.2f" % [text, float(Settings.get(key))], 16, Color.WHITE)
+	parent.add_child(l)
+	var sl := HSlider.new()
+	sl.min_value = lo
+	sl.max_value = hi
+	sl.step = stp
+	sl.value = float(Settings.get(key))
+	sl.custom_minimum_size = Vector2(0, 56)
+	sl.value_changed.connect(func(v: float):
+		Settings.set(key, v)
+		l.text = "%s: %.2f" % [text, v]
+		Audio.apply_settings())
+	sl.drag_ended.connect(func(_changed: bool):
+		Settings.save()
+		Audio.play_sfx("click"))
+	parent.add_child(sl)
+
 func _close() -> void:
+	Audio.play_sfx("back")
 	Settings.save()
 	closed.emit()

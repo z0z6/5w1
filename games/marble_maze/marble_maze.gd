@@ -16,12 +16,12 @@ const ARC_WARN := 0.8       # ostrzeżenie przed łukiem [s]
 const SHORT_PENALTY := 2.0  # kara czasowa za porażenie [s]
 const CONDUCTIVE := [1, 2, 3, 4, 5, 8, 11]   # rodzaje ścian, na które chętnie przeskakują wyładowania
 const BUS_PALETTES := [
-	[Color(0.2, 0.9, 1.0), Color(0.2, 0.4, 1.0)],
-	[Color(1.0, 0.75, 0.2), Color(1.0, 0.35, 0.1)],
-	[Color(1.0, 0.3, 0.9), Color(0.6, 0.3, 1.0)],
-	[Color(0.3, 1.0, 0.5), Color(0.8, 1.0, 0.2)],
-	[Color(1.0, 1.0, 1.0), Color(0.4, 0.9, 1.0)],
+	[Color(1.0, 0.85, 0.4), Color(1.0, 0.6, 0.15)],
+	[Color(1.0, 0.78, 0.3), Color(0.95, 0.5, 0.1)],
+	[Color(1.0, 0.9, 0.55), Color(1.0, 0.7, 0.2)],
 ]
+const TRACE_PPU := 44.0     # rozdzielczość tekstury ścieżek [px / jednostkę]
+const TRACE_CELL := 5       # rozmiar komórki trasowania [px]
 # Power-upy: good = pomaga (zielona obwódka), !good = przeszkadza (czerwona)
 const PU := {
 	"jumper": {"name": "ZWORKA", "desc": "uratuje Cię przed jedną dziurą", "good": true, "dur": 0.0, "col": Color(0.3, 1.0, 0.9)},
@@ -112,8 +112,9 @@ func _ready() -> void:
 	_setup_effects()
 	_setup_ui()
 	_load_level(clampi(Save.get_int("marble", "unlocked", 1), 1, MazeLevels.COUNT))
-	get_tree().create_timer(0.8).timeout.connect(_calibrate)
+	get_tree().create_timer(0.8).timeout.connect(func(): _calibrate(true))
 	_schedule_ambient()
+	Audio.play_music("marble")
 
 # ------------------------------------------------------------------ materiały
 func _scale(c: Color, k: float) -> Color:
@@ -164,6 +165,7 @@ func _make_materials() -> void:
 	mats.tantal = _mat(Color(0.92, 0.62, 0.08), 0.1, 0.5)
 	mats.resistor = _mat(Color(0.72, 0.62, 0.42), 0.0, 0.6)
 	mats.red_part = _mat(Color(0.6, 0.08, 0.08), 0.1, 0.4)
+	mats.ribbon = _mat(Color(0.055, 0.04, 0.025), 0.0, 0.75)
 	mats.warn = _mat(Color(1.0, 0.8, 0.0), 0.0, 0.5, Color(1.0, 0.7, 0.0), 0.5)
 	# Diody LED (3 kolory, każdy pulsuje we własnym rytmie)
 	var led_cols := [Color(1.0, 0.15, 0.1), Color(0.1, 1.0, 0.3), Color(0.25, 0.6, 1.0)]
@@ -320,6 +322,8 @@ func _ambient_short() -> void:
 		_sparks(spot, 22)
 		_light_flash(spot, _rand_color(), 2.4)
 		var d := Vector2(spot.x - ball.global_position.x, spot.z - ball.global_position.z).length()
+		if d < 6.0:
+			Audio.play_sfx("spark", -4.0 - d * 2.0, randf_range(0.85, 1.25))
 		if d < 4.0:
 			Settings.vibrate(10)
 	_schedule_ambient()
@@ -330,8 +334,8 @@ func _setup_ui() -> void:
 	add_child(ui)
 
 	lbl_info = Label.new()
-	lbl_info.position = Vector2(24, 50)
-	lbl_info.add_theme_font_size_override("font_size", 34)
+	lbl_info.position = Vector2(20, 54)
+	lbl_info.add_theme_font_size_override("font_size", 16)
 	lbl_info.add_theme_color_override("font_color", Color("e8c9a0"))
 	lbl_info.add_theme_constant_override("outline_size", 8)
 	lbl_info.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -342,10 +346,10 @@ func _setup_ui() -> void:
 	lbl_fx.fit_content = true
 	lbl_fx.scroll_active = false
 	lbl_fx.autowrap_mode = TextServer.AUTOWRAP_OFF
-	lbl_fx.position = Vector2(24, 98)
+	lbl_fx.position = Vector2(20, 90)
 	lbl_fx.custom_minimum_size = Vector2(672, 40)
 	lbl_fx.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	lbl_fx.add_theme_font_size_override("normal_font_size", 26)
+	lbl_fx.add_theme_font_size_override("normal_font_size", 16)
 	lbl_fx.add_theme_constant_override("outline_size", 6)
 	lbl_fx.add_theme_color_override("font_outline_color", Color.BLACK)
 	ui.add_child(lbl_fx)
@@ -356,7 +360,7 @@ func _setup_ui() -> void:
 	lbl_toast.offset_bottom = 330
 	lbl_toast.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_toast.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	lbl_toast.add_theme_font_size_override("font_size", 36)
+	lbl_toast.add_theme_font_size_override("font_size", 24)
 	lbl_toast.add_theme_constant_override("outline_size", 10)
 	lbl_toast.add_theme_color_override("font_outline_color", Color.BLACK)
 	lbl_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -364,8 +368,8 @@ func _setup_ui() -> void:
 	ui.add_child(lbl_toast)
 
 	lbl_dbg = Label.new()
-	lbl_dbg.position = Vector2(24, 150)
-	lbl_dbg.add_theme_font_size_override("font_size", 22)
+	lbl_dbg.position = Vector2(20, 130)
+	lbl_dbg.add_theme_font_size_override("font_size", 16)
 	lbl_dbg.add_theme_color_override("font_color", Color(1, 1, 1, 0.7))
 	lbl_dbg.add_theme_constant_override("outline_size", 6)
 	lbl_dbg.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -375,7 +379,8 @@ func _setup_ui() -> void:
 	lbl_msg.set_anchors_preset(Control.PRESET_FULL_RECT)
 	lbl_msg.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_msg.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	lbl_msg.add_theme_font_size_override("font_size", 64)
+	lbl_msg.add_theme_font_size_override("font_size", 40)
+	lbl_msg.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	lbl_msg.add_theme_color_override("font_color", Color("7dffb0"))
 	lbl_msg.add_theme_constant_override("outline_size", 12)
 	lbl_msg.add_theme_color_override("font_outline_color", Color.BLACK)
@@ -390,18 +395,20 @@ func _setup_ui() -> void:
 	hb.offset_right = -16
 	hb.add_theme_constant_override("separation", 10)
 	ui.add_child(hb)
-	hb.add_child(_btn("Menu", _go_menu))
-	hb.add_child(_btn("Kalibruj", _calibrate))
-	hb.add_child(_btn("Poziomy", _open_levels))
-	hb.add_child(_btn("Opcje", _open_options))
+	hb.add_child(_btn("MENU", _go_menu, "back"))
+	hb.add_child(_btn("KALIBR.", _calibrate))
+	hb.add_child(_btn("POZIOMY", _open_levels))
+	hb.add_child(_btn("OPCJE", _open_options))
 	_apply_options()
 
-func _btn(text: String, cb: Callable) -> Button:
+func _btn(text: String, cb: Callable, snd := "click") -> Button:
 	var b := Button.new()
 	b.text = text
 	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	UiKit.style_button(b, 26)
-	b.pressed.connect(cb)
+	UiKit.style_button(b, 16, UiKit.C_CYAN)
+	b.pressed.connect(func():
+		Audio.play_sfx(snd)
+		cb.call())
 	return b
 
 func _apply_options() -> void:
@@ -421,6 +428,7 @@ func _flash(text: String, secs := 1.0) -> void:
 			lbl_msg.text = "")
 
 func _show_overlay(c: Control) -> void:
+	Audio.set_roll(0.0)
 	overlay = c
 	ui.add_child(c)
 	get_tree().paused = true
@@ -446,7 +454,7 @@ func _open_levels() -> void:
 	root.process_mode = Node.PROCESS_MODE_ALWAYS
 	root.set_anchors_preset(Control.PRESET_FULL_RECT)
 	var dim := ColorRect.new()
-	dim.color = Color(0.0, 0.03, 0.02, 0.92)
+	dim.color = Color(0.03, 0.0, 0.1, 0.94)
 	dim.set_anchors_preset(Control.PRESET_FULL_RECT)
 	root.add_child(dim)
 	var box := VBoxContainer.new()
@@ -457,11 +465,8 @@ func _open_levels() -> void:
 	box.offset_bottom = -50
 	box.add_theme_constant_override("separation", 20)
 	root.add_child(box)
-	var title := Label.new()
-	title.text = "POZIOMY"
+	var title := UiKit.label("POZIOMY", 40, UiKit.C_YELLOW, 8)
 	title.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	title.add_theme_font_size_override("font_size", 60)
-	title.add_theme_color_override("font_color", Color("d9a066"))
 	box.add_child(title)
 	var scroll := ScrollContainer.new()
 	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -480,16 +485,19 @@ func _open_levels() -> void:
 		b.custom_minimum_size = Vector2(110, 110)
 		b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 		b.disabled = i > unlocked
-		UiKit.style_button(b, 36)
+		UiKit.style_button(b, 24, UiKit.C_CYAN)
 		b.pressed.connect(func():
+			Audio.play_sfx("click")
 			_close_overlay()
 			_load_level(i))
 		gc.add_child(b)
 	var close := Button.new()
-	close.text = "Zamknij"
-	close.custom_minimum_size = Vector2(0, 100)
-	UiKit.style_button(close, 36)
-	close.pressed.connect(_close_overlay)
+	close.text = "ZAMKNIJ"
+	close.custom_minimum_size = Vector2(0, 90)
+	UiKit.style_button(close, 24, UiKit.C_GREEN)
+	close.pressed.connect(func():
+		Audio.play_sfx("back")
+		_close_overlay())
 	box.add_child(close)
 	_show_overlay(root)
 
@@ -558,6 +566,7 @@ func _load_level(n: int) -> void:
 	_place_powerups()
 	_apply_options()
 	_update_ui()
+	Audio.play_sfx("level")
 
 # --- scalanie geometrii: jeden mesh na materiał ---------------------------------
 func _batch(mat: Material) -> SurfaceTool:
@@ -784,14 +793,17 @@ func _on_arc_start(h: Dictionary) -> void:
 	_light_flash(pos, _rand_color(), 3.0)
 	if ball != null:
 		var d := Vector2(pos.x - ball.global_position.x, pos.z - ball.global_position.z).length()
+		if d < 7.0:
+			Audio.play_sfx("buzz", -3.0 - d * 1.5, randf_range(0.9, 1.1))
 		if d < 3.5:
 			Settings.vibrate(10)
 
 func _shock(h: Dictionary) -> void:
 	_shock_at(h.pos, SHORT_PENALTY, "ZWARCIE!  +%d s" % int(SHORT_PENALTY))
 
-func _shock_at(pos: Vector3, penalty: float, text: String) -> void:
+func _shock_at(pos: Vector3, penalty: float, text: String, snd := "shock") -> void:
 	last_shock_ms = Time.get_ticks_msec()
+	Audio.play_sfx(snd)
 	var dir := ball.global_position - pos
 	dir.y = 0.0
 	if dir.length() < 0.05:
@@ -810,6 +822,10 @@ func _add_board() -> void:
 	var d := board_d
 	var mw := cols * CELL + MARGIN * 2.0   # rozmiar samego labiryntu z ramką
 	var md := rows * CELL + MARGIN * 2.0
+	var pcb_mat := mats.pcb as ShaderMaterial
+	pcb_mat.set_shader_parameter("trace_tex", _make_trace_texture(w, d))
+	pcb_mat.set_shader_parameter("board_size", Vector2(w, d))
+	pcb_mat.set_shader_parameter("maze_half", Vector2(cols * CELL / 2.0 + MARGIN, rows * CELL / 2.0 + MARGIN))
 	var pcb := MeshInstance3D.new()
 	var bm := BoxMesh.new()
 	bm.size = Vector3(w, 0.2, d)
@@ -959,7 +975,7 @@ func _spawn_ball() -> void:
 	glow.position = Vector3(0, 1.4, 0)
 	glow.omni_range = 4.0
 	glow.light_energy = 0.35
-	glow.light_color = Color(0.5, 0.9, 1.0)
+	glow.light_color = Color(1.0, 0.3, 0.22)
 	ball.add_child(glow)
 	ball_light = glow
 	# bańka izolatora
@@ -982,6 +998,7 @@ func _spawn_ball() -> void:
 func _on_ball_hit(_b: Node) -> void:
 	if prev_speed > 2.5:
 		Settings.vibrate(int(clampf(prev_speed * 4.0, 10.0, 40.0)))
+		Audio.play_sfx("hit", linear_to_db(clampf(prev_speed / 8.0, 0.15, 1.0)), randf_range(0.85, 1.2))
 		var now := Time.get_ticks_msec()
 		if prev_speed > 3.0 and now - last_hit_ms > 150:
 			last_hit_ms = now
@@ -989,11 +1006,13 @@ func _on_ball_hit(_b: Node) -> void:
 			_light_flash(ball.global_position, _rand_color(), 2.0)
 
 # ------------------------------------------------------------- sterowanie
-func _calibrate() -> void:
+func _calibrate(quiet := false) -> void:
 	if OS.has_feature("mobile"):
 		var g := Input.get_gravity()
 		calib = Vector2(g.x, g.y)
-	_flash("Skalibrowano", 0.8)
+	_flash("SKALIBROWANO", 0.8)
+	if not quiet:
+		Audio.play_sfx("calib")
 
 func _read_tilt() -> Vector2:
 	var t := Vector2.ZERO
@@ -1034,12 +1053,14 @@ func _process(delta: float) -> void:
 
 func _physics_process(delta: float) -> void:
 	if state != "play" or ball == null:
+		Audio.set_roll(0.0)
 		return
 	elapsed += delta
 	tilt = tilt.lerp(_read_tilt(), 1.0 - exp(-delta * 14.0))
 	var mul := _tick_effects(delta)
 	ball.apply_central_force(Vector3(tilt.x, 0.0, tilt.y) * TILT_FORCE * mul * ball.mass)
 	prev_speed = ball.linear_velocity.length()
+	Audio.set_roll(prev_speed)
 
 	var bp := ball.global_position
 	var b2 := Vector2(bp.x, bp.z)
@@ -1071,6 +1092,7 @@ func _physics_process(delta: float) -> void:
 func _fall_into(h: Vector3) -> void:
 	state = "falling"
 	Settings.vibrate(60)
+	Audio.play_sfx("hole")
 	_sparks(h + Vector3(0, 0.1, 0), 30, true)
 	_light_flash(h, Color(1.0, 0.2, 0.1), 3.0)
 	ball.freeze = true
@@ -1106,6 +1128,8 @@ func _win() -> void:
 	if last:
 		lbl_msg.text += "\nWSZYSTKIE POZIOMY!"
 	Settings.vibrate(90)
+	Audio.set_roll(0.0)
+	Audio.play_sfx("win")
 	var gp := goal_pos + Vector3(0, 0.3, 0)
 	_sparks(gp, 60, true)
 	_light_flash(goal_pos, Color(0.4, 1.0, 0.6), 3.5)
@@ -1121,6 +1145,8 @@ func _win() -> void:
 		_load_level(level + 1)
 
 func _go_menu() -> void:
+	Audio.set_roll(0.0)
+	Audio.play_music("menu")
 	get_tree().paused = false
 	get_tree().change_scene_to_file("res://main_menu/main_menu.tscn")
 
@@ -1171,26 +1197,23 @@ func _make_bus(side: int, xi: int, wc: int, rng: RandomNumberGenerator, occ: Dic
 	spark_spots.append(Vector3(cx, 0.25, z_wall + side * 0.75))
 
 	# parametry wiązki: szyna zasilania / magistrala danych / cienka wiązka
-	var lanes := wc * 5
-	var pitch := 0.18
-	var lane_w := 0.09
-	match rng.randi() % 3:
-		0:
-			lanes = wc * 2
-			pitch = 0.46
-			lane_w = 0.30
-		2:
-			lanes = wc * 8
-			pitch = 0.115
-			lane_w = 0.055
+	var lanes := wc * 9
+	var pitch := 0.1
+	var lane_w := 0.06
+	if rng.randi() % 2 == 0:
+		lanes = wc * 12
+		pitch = 0.075
+		lane_w = 0.045
+	# nieprzezroczysty podkład pod przewodami: zakrywa ścieżki i pady płytki w tym miejscu
+	_b_box(mats.ribbon, Vector3(wc * CELL - 0.06, 0.004, length), Vector3(cx, 0.002, z0 + side * length / 2.0))
 	var mi := MeshInstance3D.new()
 	mi.mesh = _bus_mesh(cx, z0, side, lanes, pitch, lane_w, length)
 	var m := (mats.bus as ShaderMaterial).duplicate() as ShaderMaterial
 	var pal: Array = BUS_PALETTES[rng.randi() % BUS_PALETTES.size()]
-	m.set_shader_parameter("color_a", pal[0])
-	m.set_shader_parameter("color_b", pal[1])
-	m.set_shader_parameter("speed", rng.randf_range(2.0, 7.0))
-	m.set_shader_parameter("intensity", rng.randf_range(0.25, 0.8))
+	m.set_shader_parameter("glow_a", pal[0])
+	m.set_shader_parameter("glow_b", pal[1])
+	m.set_shader_parameter("speed", rng.randf_range(1.0, 2.5))
+	m.set_shader_parameter("intensity", rng.randf_range(0.6, 1.1))
 	m.set_shader_parameter("dir", 1.0 if rng.randf() < 0.5 else -1.0)
 	m.set_shader_parameter("anim", 1.0 if Settings.effects else 0.0)
 	mi.material_override = m
@@ -1320,6 +1343,7 @@ func _discharge(tp: Vector3) -> void:
 	_sparks(tp, 24)
 	_light_flash(tp, Color(0.6, 0.9, 1.0), 3.0)
 	Settings.vibrate(10)
+	Audio.play_sfx("discharge", -4.0, randf_range(0.9, 1.15))
 	var tw := create_tween()
 	tw.tween_method(func(v: float): ball_mat.set_shader_parameter("flash", v), 1.0, 0.0, 0.6)
 
@@ -1521,17 +1545,20 @@ func _collect(pu: Dictionary) -> void:
 	_sparks(pos + Vector3(0, 0.3, 0), 24, true)
 	_light_flash(pos, Color(0.4, 1.0, 0.6) if good else Color(1.0, 0.3, 0.2), 2.5)
 	Settings.vibrate(25)
+	if type != "mine":
+		Audio.play_sfx("pu_good" if good else "pu_bad")
 	match type:
 		"jumper":
 			jumper = true
 		"batt":
 			elapsed = maxf(0.0, elapsed - 4.0)
 		"mine":
-			_shock_at(ball.global_position, 3.0, "MINA!  +3 s")
+			_shock_at(ball.global_position, 3.0, "MINA!  +3 s", "mine")
 		_:
 			fx[type] = float(info.dur)
 	if type == "scan":
 		scan_timer = 0.0
+		Audio.play_sfx("scan", -2.0)
 	_toast("%s\n%s" % [info.name, info.desc], good)
 
 func _toast(text: String, good: bool) -> void:
@@ -1547,6 +1574,7 @@ func _toast(text: String, good: bool) -> void:
 func _jumper_save(h: Vector3) -> void:
 	jumper = false
 	jumper_ms = Time.get_ticks_msec()
+	Audio.play_sfx("jumper")
 	var dir := ball.global_position - h
 	dir.y = 0.0
 	if dir.length() < 0.05:
@@ -1580,6 +1608,7 @@ func _tick_effects(delta: float) -> float:
 		if emi_buzz <= 0.0:
 			emi_buzz = 0.35
 			Settings.vibrate(10)
+			Audio.play_sfx("emi", -6.0, randf_range(0.8, 1.3))
 	shield.visible = fx.insul > 0.0
 	if fx.scan > 0.0:
 		scan_timer -= delta
@@ -1630,3 +1659,115 @@ func _update_fx_text() -> void:
 	if txt != fx_text_cache:
 		fx_text_cache = txt
 		lbl_fx.text = txt
+
+# ================================================ spójne ścieżki PCB (tekstura)
+# Trasowanie "Manhattan": długie ścieżki ze ściętymi narożnikami (45°), często w wiązkach
+# równoległych, każda zakończona padem - dzięki temu układ wygląda na spójny, bez ślepych uliczek.
+# Kanały tekstury: R = ścieżka, G = pad, B = otwór w padzie.
+func _make_trace_texture(w_units: float, d_units: float) -> ImageTexture:
+	var wpx := clampi(int(ceil(w_units * TRACE_PPU)), 64, 4096)
+	var hpx := clampi(int(ceil(d_units * TRACE_PPU)), 64, 4096)
+	var img := Image.create_empty(wpx, hpx, false, Image.FORMAT_RGB8)
+	img.fill(Color(0, 0, 0))
+	var rng := RandomNumberGenerator.new()
+	rng.seed = level * 977 + 5
+	var gw := wpx / TRACE_CELL
+	var gh := hpx / TRACE_CELL
+	var dirs: Array[Vector2i] = [Vector2i(1, 0), Vector2i(0, 1), Vector2i(-1, 0), Vector2i(0, -1)]
+	var pads: Array[Vector2i] = []
+	var nets := int(gw * gh / 160.0)
+	var half_x := (cols * CELL / 2.0 + MARGIN) * TRACE_PPU / TRACE_CELL
+	var half_y := (rows * CELL / 2.0 + MARGIN) * TRACE_PPU / TRACE_CELL
+	for n in nets:
+		var k: int = [1, 1, 2, 3, 4, 6][rng.randi() % 6]        # ile równoległych ścieżek
+		var cur := Vector2i(rng.randi_range(6, gw - 7), rng.randi_range(6, gh - 7))
+		# w obrębie labiryntu zostaje tylko ~20% startów -> rzadka sieć, nie przeszkadza w śledzeniu kulki
+		if absf(cur.x - gw / 2.0) < half_x and absf(cur.y - gh / 2.0) < half_y and rng.randf() > 0.2:
+			continue
+		var d := rng.randi() % 4
+		var pts: Array[Vector2i] = [cur]
+		for r in rng.randi_range(2, 5):
+			var run := rng.randi_range(14, 46)
+			var nxt := cur + dirs[d] * run
+			nxt.x = clampi(nxt.x, 5, gw - 6)
+			nxt.y = clampi(nxt.y, 5, gh - 6)
+			if absi(nxt.x - cur.x) + absi(nxt.y - cur.y) < 12:
+				break
+			pts.append(nxt)
+			cur = nxt
+			d = (d + (1 if rng.randf() < 0.5 else 3)) % 4
+		if pts.size() < 2:
+			continue
+		var spacing := 2 if rng.randf() < 0.7 else 3
+		for j in k:
+			var off := (j - (k - 1) / 2.0) * spacing
+			var pv := _offset_polyline(pts, off)
+			_draw_poly(img, pv, 3, 2 * TRACE_CELL)
+			pads.append(pv[0])
+			pads.append(pv[pv.size() - 1])
+			# przelotki w zakrętach co jakiś czas
+			if pv.size() > 2 and rng.randf() < 0.25:
+				pads.append(pv[1 + rng.randi() % (pv.size() - 2)])
+	for pc in pads:
+		_draw_pad(img, pc)
+	img.generate_mipmaps()
+	return ImageTexture.create_from_image(img)
+
+# przesunięcie łamanej o off komórek w bok (kąty proste) -> wierzchołki w pikselach
+func _offset_polyline(pts: Array[Vector2i], off: float) -> Array[Vector2i]:
+	var n := pts.size()
+	var normals: Array[Vector2] = []
+	for i in n - 1:
+		var v := Vector2(signi(pts[i + 1].x - pts[i].x), signi(pts[i + 1].y - pts[i].y))
+		normals.append(Vector2(-v.y, v.x))
+	var out: Array[Vector2i] = []
+	for i in n:
+		var o := Vector2.ZERO
+		if i == 0:
+			o = normals[0]
+		elif i == n - 1:
+			o = normals[n - 2]
+		else:
+			o = normals[i - 1] + normals[i]
+		var p := Vector2(pts[i]) + o * off
+		out.append(Vector2i(roundi(p.x * TRACE_CELL + TRACE_CELL / 2.0), roundi(p.y * TRACE_CELL + TRACE_CELL / 2.0)))
+	return out
+
+func _draw_poly(img: Image, pv: Array[Vector2i], t: int, chamfer: int) -> void:
+	var path: Array[Vector2i] = [pv[0]]
+	for i in range(1, pv.size() - 1):
+		var a := pv[i - 1]
+		var p := pv[i]
+		var b := pv[i + 1]
+		var da := Vector2i(signi(p.x - a.x), signi(p.y - a.y))
+		var db := Vector2i(signi(b.x - p.x), signi(b.y - p.y))
+		var la := absi(p.x - a.x) + absi(p.y - a.y)
+		var lb := absi(b.x - p.x) + absi(b.y - p.y)
+		if la > 2 * chamfer and lb > 2 * chamfer:
+			path.append(p - da * chamfer)
+			path.append(p + db * chamfer)
+		else:
+			path.append(p)
+	path.append(pv[pv.size() - 1])
+	for i in path.size() - 1:
+		_draw_seg(img, path[i], path[i + 1], t)
+
+func _draw_seg(img: Image, a: Vector2i, b: Vector2i, t: int) -> void:
+	var col := Color(1, 0, 0)
+	if a.x == b.x or a.y == b.y:
+		img.fill_rect(Rect2i(mini(a.x, b.x) - t / 2, mini(a.y, b.y) - t / 2, absi(a.x - b.x) + t, absi(a.y - b.y) + t), col)
+		return
+	var steps := maxi(absi(b.x - a.x), absi(b.y - a.y))
+	for s in steps + 1:
+		var x := a.x + roundi(float(b.x - a.x) * s / steps)
+		var y := a.y + roundi(float(b.y - a.y) * s / steps)
+		img.fill_rect(Rect2i(x - t / 2, y - t / 2, t, t), col)
+
+func _draw_pad(img: Image, c: Vector2i) -> void:
+	_disc(img, c, 5, Color(1, 1, 0))
+	_disc(img, c, 2, Color(1, 1, 1))
+
+func _disc(img: Image, c: Vector2i, r: int, col: Color) -> void:
+	for dy in range(-r, r + 1):
+		var dx := int(sqrt(float(r * r - dy * dy)))
+		img.fill_rect(Rect2i(c.x - dx, c.y + dy, 2 * dx + 1, 1), col)
