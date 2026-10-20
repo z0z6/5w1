@@ -55,3 +55,22 @@ elektronicznych jako ściany, otwory montażowe oraz **zwarcia** - okresowe łuk
 - Magistrale mają nieprzezroczysty podkład (`mats.ribbon`), który zakrywa ścieżki i pady pod spodem.
 - Sieć ścieżek PCB: gęsta poza labiryntem, rzadka i mocno wygaszona w środku (`maze_half` w `pcb.gdshader`).
 - Kulka jaskrawo czerwona (`body_color` w `ball.gdshader`, światło towarzyszące w `_spawn_ball()`).
+
+## Wersja 1.6 - Pinball i wspólny zestaw
+- **Pinball** (`games/pinball/`): stół PCB, flippery (lewa / prawa połowa ekranu), prawa połowa ładuje sprężynę wyrzutni,
+  3 bumpery-kondensatory, 2 slingshoty, 3 tory zwrotne (mnożnik), 6 celów-układów, power-upy, multiball,
+  nudge (potrząśnięcie telefonem) i TILT. Rekord zapisuje się w `user://save.cfg` (`pinball/high`).
+- **Wspólny zestaw dla kolejnych gier** (`common/`):
+  `PcbKit` (materiały, 12 części, scalanie geometrii, spójne ścieżki, magistrale, dekoracje, płytka),
+  `Fx` (iskry, błyski, pulsujące LED), `Discharger` (łuk elektryczny), `PickupKit` (pickupy),
+  shadery `pcb`, `bus`, `ball` w `common/shaders/`.
+- Marble Maze nadal ma własne kopie tych funkcji (do przeniesienia na `common/` przy okazji).
+- Nowa melodia / efekt: `tools/gen_audio.gd` (+ nazwa w `autoload/audio.gd`), potem uruchom generator.
+
+## Wersja 1.7 - Chip Match (gra nr 5)
+- `games/chipmatch/`: match-3 na płytce PCB. Plansza 8x10, 5-6 rodzajów elementów (kondensator, układ scalony,
+  dioda LED, tantal, dławik, kwarc). Zamiana: przeciągnięcie lub dwa stuknięcia.
+- 4 w rzędzie = ZWARCIE (czyści cały rząd/kolumnę), 5 w rzędzie lub układ L/T = EMP (zamień z elementem ->
+  znikają wszystkie takie same). Za EMP nagroda: +1 booster.
+- Boostery (po 1 na poziom): LUTUJ (usuń element), MIESZAJ, +3 RUCHY. 30 poziomów, gwiazdki (1x / 1.5x / 2x celu).
+- Cele poziomów skalibrowane symulacją (~560 pkt/ruch dla losowego gracza); parametry w `_level_params()`.
