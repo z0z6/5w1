@@ -142,10 +142,10 @@ func _make_materials() -> void:
 	mats.black = _mat(Color(0.01, 0.01, 0.01), 0.0, 1.0)
 	mats.copper = _mat(Color(0.86, 0.55, 0.30), 1.0, 0.3)
 	var ballm := ShaderMaterial.new()
-	ballm.shader = load("res://games/marble_maze/ball.gdshader")
+	ballm.shader = load("res://common/shaders/ball.gdshader")
 	mats.ball = ballm
 	var busm := ShaderMaterial.new()
-	busm.shader = load("res://games/marble_maze/bus.gdshader")
+	busm.shader = load("res://common/shaders/bus.gdshader")
 	mats.bus = busm
 	var pm := StandardMaterial3D.new()
 	pm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
@@ -180,7 +180,7 @@ func _make_materials() -> void:
 	sp.albedo_color = Color(3.0, 3.0, 3.0)
 	mats.spark = sp
 	var sm := ShaderMaterial.new()
-	sm.shader = load("res://games/marble_maze/pcb.gdshader")
+	sm.shader = load("res://common/shaders/pcb.gdshader")
 	mats.pcb = sm
 
 func _phys(friction: float, bounce: float) -> PhysicsMaterial:

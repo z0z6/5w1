@@ -4,10 +4,10 @@ extends Control
 
 const GAMES := [
 	{"name": "MARBLE MAZE", "scene": "res://games/marble_maze/marble_maze.tscn", "sub": "labirynt + żyroskop", "color": Color("00e5ff")},
-	{"name": "PINBALL", "scene": "res://games/pinball/pinball.tscn", "sub": "wkrótce", "color": Color("ff2bd6")},
+	{"name": "PINBALL", "scene": "res://games/pinball/pinball.tscn", "sub": "flippery + dotyk", "color": Color("ff2bd6")},
 	{"name": "DIONAKRA", "scene": "res://games/dionakra/dionakra.tscn", "sub": "wkrótce", "color": Color("ffd400")},
 	{"name": "SIRTET", "scene": "res://games/sirtet/sirtet.tscn", "sub": "wkrótce", "color": Color("39ff14")},
-	{"name": "GRA NR 5", "scene": "res://games/game5/game5.tscn", "sub": "wkrótce", "color": Color("ff8a00")},
+	{"name": "CHIP MATCH", "scene": "res://games/chipmatch/chipmatch.tscn", "sub": "układaj trójki", "color": Color("ff8a00")},
 ]
 
 var panel: OptionsPanel
