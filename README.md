@@ -23,3 +23,12 @@ Wszystko zapisuje się od razu w `user://settings.cfg` i wraca po restarcie apli
 30 poziomów (przycisk „Poziomy"; kolejne odblokowują się po ukończeniu poprzedniego), 12 rodzajów elementów
 elektronicznych jako ściany, otwory montażowe oraz **zwarcia** - okresowe łuki elektryczne na ścieżce
 (porażenie = odrzut kulki + 2 s kary).
+
+## Efekty i power-upy (wersja 1.2)
+- **Magistrale**: poza labiryntem wiązki równoległych ścieżek (szyny zasilania, magistrale danych, cienkie wiązki),
+  podłączone do ścian przez sloty; płyną po nich kolorowe impulsy o różnym natężeniu (`bus.gdshader`).
+- **Kulka**: fluorescencyjna powłoka z migoczącymi ładunkami (`ball.gdshader`). Ładunek rośnie z prędkością,
+  po przekroczeniu progu przeskakuje na pobliski element ściany (najchętniej metalowy) + iskry i wibracja.
+- **Power-upy** (od poziomu 2; zielona obwódka = pomaga, czerwona = przeszkadza):
+  ZWORKA, IZOLATOR, RADIATOR, SKANER, BATERIA / PRZEPIĘCIE, ODWROTNA POLARYZACJA, ZAKŁÓCENIA, MINA.
+- Wyłączenie **Efektów** w opcjach gasi impulsy na magistralach, iskry i wyładowania (power-upy działają nadal).

@@ -1,19 +1,14 @@
 shader_type spatial;
-// Proceduralna płytka PCB: maska lutownicza + ścieżki miedziane + pady
-// + kolorowe impulsy prądu płynące po ścieżkach (uniform anim = 0 wyłącza).
+// Proceduralna płytka PCB: maska lutownicza + ścieżki miedziane + pady.
+// (Animowane prądy są teraz na magistralach poza labiryntem - patrz bus.gdshader.)
 
 uniform vec3 mask_color : source_color = vec3(0.02, 0.27, 0.14);
 uniform vec3 copper : source_color = vec3(0.86, 0.55, 0.30);
-uniform float anim = 1.0;
 
 varying vec3 lpos;
 
 float hash(vec2 p) {
 	return fract(sin(dot(p, vec2(127.1, 311.7))) * 43758.5453);
-}
-
-vec3 hue(float h) {
-	return clamp(abs(fract(h + vec3(0.0, 2.0, 1.0) / 3.0) * 6.0 - 3.0) - 1.0, 0.0, 1.0);
 }
 
 void vertex() {
@@ -42,18 +37,8 @@ void fragment() {
 	col = mix(col, copper, pad);
 	col = mix(col, vec3(0.02), hole);
 
-	// Płynący prąd: "kometa" z ostrym czołem i ogonem, kierunek zależny od odcinka
-	float dir_h = hr > 0.14 ? 1.0 : -1.0;
-	float dir_v = hc > 0.14 ? 1.0 : -1.0;
-	float ph_h = fract(lpos.x * 0.30 * dir_h - TIME * 0.45 + hr * 7.0);
-	float ph_v = fract(lpos.z * 0.30 * dir_v - TIME * 0.45 + hc * 7.0);
-	float pulse_h = smoothstep(0.0, 0.03, ph_h) * (1.0 - smoothstep(0.03, 0.22, ph_h));
-	float pulse_v = smoothstep(0.0, 0.03, ph_v) * (1.0 - smoothstep(0.03, 0.22, ph_v));
-	vec3 glow = hue(hr * 3.5) * tr_h * pulse_h + hue(hc * 3.5 + 0.3) * tr_v * pulse_v;
-
 	ALBEDO = col;
 	ROUGHNESS = mix(0.55, 0.3, pad);
 	METALLIC = pad * 0.9;
 	SPECULAR = 0.35;
-	EMISSION = glow * 2.6 * anim;
 }
