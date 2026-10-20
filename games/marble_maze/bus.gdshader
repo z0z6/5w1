@@ -37,10 +37,10 @@ void fragment() {
 	float lane_int = intensity * (0.35 + 0.65 * h2) * surge;
 
 	vec3 c = mix(color_a, color_b, h);
-	vec3 glow = c * pk * 1.4 + mix(c, vec3(1.0), 0.5) * pk2 * 2.2 + c * 0.08;
+	vec3 glow = c * pk * 1.4 + mix(c, vec3(1.0), 0.5) * pk2 * 2.2 + c * 0.04;
 
 	ALBEDO = copper_color;
 	METALLIC = 0.85;
 	ROUGHNESS = 0.35;
-	EMISSION = glow * lane_int * core * anim;
+	EMISSION = glow * lane_int * core * anim * 0.6;
 }

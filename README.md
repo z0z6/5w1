@@ -32,3 +32,9 @@ elektronicznych jako ściany, otwory montażowe oraz **zwarcia** - okresowe łuk
 - **Power-upy** (od poziomu 2; zielona obwódka = pomaga, czerwona = przeszkadza):
   ZWORKA, IZOLATOR, RADIATOR, SKANER, BATERIA / PRZEPIĘCIE, ODWROTNA POLARYZACJA, ZAKŁÓCENIA, MINA.
 - Wyłączenie **Efektów** w opcjach gasi impulsy na magistralach, iskry i wyładowania (power-upy działają nadal).
+
+## Zmiany w wersji 1.3
+- Osie X i Y są domyślnie **odwrócone** (przełączniki w opcjach zostają). Stary zapis ustawień jest jednorazowo
+  zmigrowany do nowych domyślnych (wersja pliku `meta/version = 2`); późniejsze wybory użytkownika są respektowane.
+- Efekty (iskry, błyski, łuki, zwarcia, komunikaty, power-upy) są dłuższe i wyraźniejsze.
+- Prąd na magistralach osłabiony; kulka mocniej naelektryzowana (gęstsze ładunki, częstsze wyładowania, korona iskier).

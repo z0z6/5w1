@@ -10,9 +10,9 @@ const TILT_FORCE := 30.0
 const MARGIN := 0.7
 const CAM_FOV := 40.0
 const HOLE_R := 0.3
-const ARC_PERIOD := 2.8     # okres zwarcia [s]
-const ARC_ACTIVE := 0.7     # czas trwania łuku [s]
-const ARC_WARN := 0.6       # ostrzeżenie przed łukiem [s]
+const ARC_PERIOD := 3.2     # okres zwarcia [s]
+const ARC_ACTIVE := 0.9     # czas trwania łuku [s]
+const ARC_WARN := 0.8       # ostrzeżenie przed łukiem [s]
 const SHORT_PENALTY := 2.0  # kara czasowa za porażenie [s]
 const CONDUCTIVE := [1, 2, 3, 4, 5, 8, 11]   # rodzaje ścian, na które chętnie przeskakują wyładowania
 const BUS_PALETTES := [
@@ -25,13 +25,13 @@ const BUS_PALETTES := [
 # Power-upy: good = pomaga (zielona obwódka), !good = przeszkadza (czerwona)
 const PU := {
 	"jumper": {"name": "ZWORKA", "desc": "uratuje Cię przed jedną dziurą", "good": true, "dur": 0.0, "col": Color(0.3, 1.0, 0.9)},
-	"insul": {"name": "IZOLATOR", "desc": "odporność na zwarcia 10 s", "good": true, "dur": 10.0, "col": Color(0.4, 0.7, 1.0)},
-	"heat": {"name": "RADIATOR", "desc": "kulka hamuje - łatwiej sterować 8 s", "good": true, "dur": 8.0, "col": Color(0.75, 0.9, 1.0)},
-	"scan": {"name": "SKANER", "desc": "pokazuje drogę do CPU 6 s", "good": true, "dur": 6.0, "col": Color(0.85, 1.0, 0.2)},
+	"insul": {"name": "IZOLATOR", "desc": "odporność na zwarcia 13 s", "good": true, "dur": 13.0, "col": Color(0.4, 0.7, 1.0)},
+	"heat": {"name": "RADIATOR", "desc": "kulka hamuje - łatwiej sterować 10 s", "good": true, "dur": 10.0, "col": Color(0.75, 0.9, 1.0)},
+	"scan": {"name": "SKANER", "desc": "pokazuje drogę do CPU 8 s", "good": true, "dur": 8.0, "col": Color(0.85, 1.0, 0.2)},
 	"batt": {"name": "BATERIA", "desc": "-4 s z czasu", "good": true, "dur": 0.0, "col": Color(0.3, 1.0, 0.35)},
-	"surge": {"name": "PRZEPIĘCIE", "desc": "kulka przyspiesza 8 s", "good": false, "dur": 8.0, "col": Color(1.0, 0.25, 0.1)},
-	"rev": {"name": "ODWROTNA POLARYZACJA", "desc": "sterowanie odwrócone 7 s", "good": false, "dur": 7.0, "col": Color(0.85, 0.35, 1.0)},
-	"emi": {"name": "ZAKŁÓCENIA", "desc": "szarpie kulką 8 s", "good": false, "dur": 8.0, "col": Color(1.0, 0.6, 0.1)},
+	"surge": {"name": "PRZEPIĘCIE", "desc": "kulka przyspiesza 10 s", "good": false, "dur": 10.0, "col": Color(1.0, 0.25, 0.1)},
+	"rev": {"name": "ODWROTNA POLARYZACJA", "desc": "sterowanie odwrócone 9 s", "good": false, "dur": 9.0, "col": Color(0.85, 0.35, 1.0)},
+	"emi": {"name": "ZAKŁÓCENIA", "desc": "szarpie kulką 10 s", "good": false, "dur": 10.0, "col": Color(1.0, 0.6, 0.1)},
 	"mine": {"name": "MINA", "desc": "wstrząs i +3 s kary", "good": false, "dur": 0.0, "col": Color(1.0, 0.1, 0.15)},
 }
 
@@ -86,6 +86,7 @@ var shield: MeshInstance3D
 var ball_light: OmniLight3D
 var charge := 0.0
 var charge_goal := 1.0
+var corona_t := 0.0
 var ball_arc: Node3D
 var arc_segs: Array = []
 var arc_jit: Array = []
@@ -147,14 +148,14 @@ func _make_materials() -> void:
 	mats.bus = busm
 	var pm := StandardMaterial3D.new()
 	pm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
-	pm.albedo_color = Color(2.4, 2.0, 0.4)
+	pm.albedo_color = Color(3.2, 2.8, 0.5)
 	mats.path = pm
 	var shm := StandardMaterial3D.new()
 	shm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
-	shm.albedo_color = Color(0.3, 0.7, 1.0, 0.22)
+	shm.albedo_color = Color(0.3, 0.7, 1.0, 0.4)
 	shm.emission_enabled = true
 	shm.emission = Color(0.3, 0.7, 1.0)
-	shm.emission_energy_multiplier = 0.8
+	shm.emission_energy_multiplier = 1.6
 	mats.shield = shm
 	mats.silver = _mat(Color(0.52, 0.54, 0.58), 1.0, 0.45)
 	mats.ferrite = _mat(Color(0.17, 0.16, 0.18), 0.3, 0.6)
@@ -174,7 +175,7 @@ func _make_materials() -> void:
 	var sp := StandardMaterial3D.new()
 	sp.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
 	sp.vertex_color_use_as_albedo = true
-	sp.albedo_color = Color(2.2, 2.2, 2.2)
+	sp.albedo_color = Color(3.0, 3.0, 3.0)
 	mats.spark = sp
 	var sm := ShaderMaterial.new()
 	sm.shader = load("res://games/marble_maze/pcb.gdshader")
@@ -243,8 +244,8 @@ func _fit_camera() -> void:
 # -------------------------------------------------------- efekty (iskry, błyski)
 func _setup_effects() -> void:
 	spark_mesh = SphereMesh.new()
-	spark_mesh.radius = 0.035
-	spark_mesh.height = 0.07
+	spark_mesh.radius = 0.055
+	spark_mesh.height = 0.11
 	spark_mesh.radial_segments = 6
 	spark_mesh.rings = 3
 	spark_mesh.material = mats.spark
@@ -259,7 +260,7 @@ func _setup_effects() -> void:
 	spark_curve.add_point(Vector2(1, 0))
 	for i in 2:
 		var l := OmniLight3D.new()
-		l.omni_range = 3.0
+		l.omni_range = 4.0
 		l.light_energy = 0.0
 		add_child(l)
 		flash_lights.append(l)
@@ -277,15 +278,15 @@ func _sparks(pos: Vector3, amount := 20, big := false) -> void:
 		return
 	var p := CPUParticles3D.new()
 	p.mesh = spark_mesh
-	p.amount = amount
-	p.lifetime = 0.7 if big else 0.5
+	p.amount = int(amount * 1.5)
+	p.lifetime = 1.3 if big else 0.9
 	p.one_shot = true
 	p.explosiveness = 1.0
 	p.direction = Vector3.UP
 	p.spread = 180.0 if big else 75.0
 	p.initial_velocity_min = 1.5
-	p.initial_velocity_max = 6.0 if big else 4.5
-	p.gravity = Vector3(0, -7, 0)
+	p.initial_velocity_max = 7.5 if big else 5.5
+	p.gravity = Vector3(0, -5, 0)
 	p.scale_amount_curve = spark_curve
 	p.color_initial_ramp = spark_grad
 	p.emission_shape = CPUParticles3D.EMISSION_SHAPE_SPHERE
@@ -302,9 +303,9 @@ func _light_flash(pos: Vector3, color: Color, energy := 2.5) -> void:
 	flash_idx = (flash_idx + 1) % flash_lights.size()
 	l.global_position = pos + Vector3(0, 0.6, 0)
 	l.light_color = color
-	l.light_energy = energy
+	l.light_energy = energy * 1.4
 	var tw := create_tween()
-	tw.tween_property(l, "light_energy", 0.0, 0.25)
+	tw.tween_property(l, "light_energy", 0.0, 0.5)
 
 func _rand_color() -> Color:
 	return Color.from_hsv(randf(), 0.55, 1.0)
@@ -316,8 +317,8 @@ func _schedule_ambient() -> void:
 func _ambient_short() -> void:
 	if state == "play" and Settings.effects and not spark_spots.is_empty() and ball != null and overlay == null:
 		var spot: Vector3 = spark_spots[randi() % spark_spots.size()]
-		_sparks(spot, 14)
-		_light_flash(spot, _rand_color(), 1.6)
+		_sparks(spot, 22)
+		_light_flash(spot, _rand_color(), 2.4)
 		var d := Vector2(spot.x - ball.global_position.x, spot.z - ball.global_position.z).length()
 		if d < 4.0:
 			Settings.vibrate(10)
@@ -779,8 +780,8 @@ func _update_hazards(delta: float) -> void:
 
 func _on_arc_start(h: Dictionary) -> void:
 	var pos: Vector3 = h.pos
-	_sparks(pos + Vector3(0, 0.2, 0), 16)
-	_light_flash(pos, _rand_color(), 2.0)
+	_sparks(pos + Vector3(0, 0.2, 0), 24)
+	_light_flash(pos, _rand_color(), 3.0)
 	if ball != null:
 		var d := Vector2(pos.x - ball.global_position.x, pos.z - ball.global_position.z).length()
 		if d < 3.5:
@@ -984,8 +985,8 @@ func _on_ball_hit(_b: Node) -> void:
 		var now := Time.get_ticks_msec()
 		if prev_speed > 3.0 and now - last_hit_ms > 150:
 			last_hit_ms = now
-			_sparks(ball.global_position, 10)
-			_light_flash(ball.global_position, _rand_color(), 1.2)
+			_sparks(ball.global_position, 16)
+			_light_flash(ball.global_position, _rand_color(), 2.0)
 
 # ------------------------------------------------------------- sterowanie
 func _calibrate() -> void:
@@ -1189,7 +1190,7 @@ func _make_bus(side: int, xi: int, wc: int, rng: RandomNumberGenerator, occ: Dic
 	m.set_shader_parameter("color_a", pal[0])
 	m.set_shader_parameter("color_b", pal[1])
 	m.set_shader_parameter("speed", rng.randf_range(2.0, 7.0))
-	m.set_shader_parameter("intensity", rng.randf_range(0.5, 1.6))
+	m.set_shader_parameter("intensity", rng.randf_range(0.25, 0.8))
 	m.set_shader_parameter("dir", 1.0 if rng.randf() < 0.5 else -1.0)
 	m.set_shader_parameter("anim", 1.0 if Settings.effects else 0.0)
 	mi.material_override = m
@@ -1262,10 +1263,15 @@ func _update_charge(delta: float) -> void:
 		ball_mat.set_shader_parameter("charge", 0.2)
 		ball_arc.visible = false
 		return
-	charge += delta * (0.2 + prev_speed * 0.1)
+	charge += delta * (0.4 + prev_speed * 0.18)
 	var c := clampf(charge / charge_goal, 0.0, 1.0)
-	ball_mat.set_shader_parameter("charge", c)
-	ball_light.light_energy = 0.35 + c * 0.5
+	ball_mat.set_shader_parameter("charge", 0.35 + 0.65 * c)
+	ball_light.light_energy = (0.45 + c * 0.7) * randf_range(0.75, 1.35)
+	# korona: drobne iskry wokół kulki, gdy jest mocno naładowana i się toczy
+	corona_t -= delta
+	if corona_t <= 0.0 and c > 0.4 and prev_speed > 0.8:
+		corona_t = randf_range(0.15, 0.4)
+		_sparks(ball.global_position + Vector3(0, 0.2, 0), 5)
 	if charge >= charge_goal and arc_time <= 0.0:
 		var tp := _pick_wall_target()
 		if tp != Vector3.INF:
@@ -1307,15 +1313,15 @@ func _pick_wall_target() -> Vector3:
 
 func _discharge(tp: Vector3) -> void:
 	arc_target = tp
-	arc_time = 0.22
+	arc_time = 0.45
 	arc_reroll = 0.0
 	charge = 0.0
-	charge_goal = randf_range(0.8, 1.6)
-	_sparks(tp, 14)
-	_light_flash(tp, Color(0.6, 0.9, 1.0), 2.0)
+	charge_goal = randf_range(0.6, 1.2)
+	_sparks(tp, 24)
+	_light_flash(tp, Color(0.6, 0.9, 1.0), 3.0)
 	Settings.vibrate(10)
 	var tw := create_tween()
-	tw.tween_method(func(v: float): ball_mat.set_shader_parameter("flash", v), 1.0, 0.0, 0.35)
+	tw.tween_method(func(v: float): ball_mat.set_shader_parameter("flash", v), 1.0, 0.0, 0.6)
 
 func _update_ball_arc(delta: float) -> void:
 	if ball_arc == null or ball == null:
@@ -1535,7 +1541,7 @@ func _toast(text: String, good: bool) -> void:
 		toast_tw.kill()
 	lbl_toast.modulate.a = 1.0
 	toast_tw = create_tween()
-	toast_tw.tween_interval(1.8)
+	toast_tw.tween_interval(2.8)
 	toast_tw.tween_property(lbl_toast, "modulate:a", 0.0, 0.5)
 
 func _jumper_save(h: Vector3) -> void:
@@ -1601,9 +1607,9 @@ func _update_scan_path() -> void:
 	var n := 0
 	while c != ci and n < 500:
 		var m := CylinderMesh.new()
-		m.top_radius = 0.09
-		m.bottom_radius = 0.09
-		m.height = 0.02
+		m.top_radius = 0.13
+		m.bottom_radius = 0.13
+		m.height = 0.03
 		m.radial_segments = 8
 		m.rings = 1
 		st.append_from(m, 0, Transform3D(Basis.IDENTITY, _cell_pos(c) + Vector3(0, 0.03, 0)))
