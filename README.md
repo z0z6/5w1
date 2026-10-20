@@ -74,3 +74,13 @@ elektronicznych jako ściany, otwory montażowe oraz **zwarcia** - okresowe łuk
   znikają wszystkie takie same). Za EMP nagroda: +1 booster.
 - Boostery (po 1 na poziom): LUTUJ (usuń element), MIESZAJ, +3 RUCHY. 30 poziomów, gwiazdki (1x / 1.5x / 2x celu).
 - Cele poziomów skalibrowane symulacją (~560 pkt/ruch dla losowego gracza); parametry w `_level_params()`.
+
+## Wersja 1.8 - Sirtet (gra nr 4)
+- `games/sirtet/`: spadające bloki-moduły (RAM, układ, przekaźnik, tantal, transformator, radiator, kondensator)
+  na płytce PCB. 8 kolumn, wysokość planszy (12-17 rzędów) dobierana do proporcji ekranu.
+- Sterowanie: przyciski (HOLD, <, OBR, >, v, DROP) albo gesty na planszy (przeciągnięcie = ruch / szybciej w dół,
+  stuknięcie = obrót, szybkie machnięcie w dół = zrzut). Klawiatura: strzałki, Z/X, spacja, C.
+- Duch klocka, hold, podgląd 3 następnych, opóźnienie blokady, 7-klockowy "worek", kopnięcia przy obrocie.
+- Power-upy w losowych komórkach klocków (uruchamiają się po położeniu klocka): SPOWOLNIENIE, x2, ZWARCIE (czyści
+  2 dolne rzędy) / PRZYSPIESZENIE, ŚMIECI (rząd od dołu), ODWROTNA POLARYZACJA (lewo-prawo).
+- Własny wygląd i oryginalna melodia (tools/gen_audio.gd -> "sirtet"); nazwa i wygląd celowo odbiegają od klasyka.
