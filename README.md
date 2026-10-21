@@ -84,3 +84,12 @@ elektronicznych jako ściany, otwory montażowe oraz **zwarcia** - okresowe łuk
 - Power-upy w losowych komórkach klocków (uruchamiają się po położeniu klocka): SPOWOLNIENIE, x2, ZWARCIE (czyści
   2 dolne rzędy) / PRZYSPIESZENIE, ŚMIECI (rząd od dołu), ODWROTNA POLARYZACJA (lewo-prawo).
 - Własny wygląd i oryginalna melodia (tools/gen_audio.gd -> "sirtet"); nazwa i wygląd celowo odbiegają od klasyka.
+
+## Wersja 1.9 - Dionakra (gra nr 3) - komplet 5 gier
+- `games/dionakra/`: kulka, paletka i cegły-elementy elektroniczne. Własna fizyka kulki (stała prędkość,
+  kąt odbicia zależny od miejsca uderzenia w paletkę, podkroki przeciw tunelowaniu).
+- Cegły: zwykłe (6 wyglądów), wzmocnione (2 uderzenia, radiator), niezniszczalne (złącze), wybuchowe (ZWARCIE, reakcja łańcuchowa).
+- 30 poziomów generowanych z 8 szablonów (symetryczne), trudność rośnie: więcej wzmocnionych / wybuchowych / niezniszczalnych.
+- Power-upy spadają z cegieł (11 rodzajów, 7 pomaga / 4 przeszkadza): szersza/węższa paletka, spowolnienie/szybka kula,
+  multiball, wyładowania (paletka strzela), magnes, przebicie, życie, odwrócone sterowanie, zwarcie paletki.
+- Sterowanie: palec przesuwa paletkę, dotknięcie wystrzeliwuje kulkę; klawiatura: strzałki + spacja.

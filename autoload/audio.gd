@@ -7,9 +7,9 @@ const SFX_NAMES := [
 	"click", "back", "toggle_on", "toggle_off", "type", "boot_ok", "coin", "calib", "hit", "zap",
 	"spark", "buzz", "shock", "discharge", "emi", "hole", "win", "level", "pu_good", "pu_bad",
 	"jumper", "mine", "scan", "flipper", "bumper", "sling", "target", "rollover", "launch", "drain",
-	"multi", "tilt", "tick", "swap", "bad", "match", "special", "blast", "emp", "shuffle", "booster", "rot", "lock", "hard", "line", "quad", "hold",
+	"multi", "tilt", "tick", "swap", "bad", "match", "special", "blast", "emp", "shuffle", "booster", "rot", "lock", "hard", "line", "quad", "hold", "brick", "clang", "paddle", "wall", "tink", "boom", "laser",
 ]
-const MUSIC_NAMES := ["intro", "menu", "marble", "pinball", "match3", "sirtet"]
+const MUSIC_NAMES := ["intro", "menu", "marble", "pinball", "match3", "sirtet", "dionakra"]
 const POOL := 10
 
 var sfx := {}
