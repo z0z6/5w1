@@ -136,6 +136,30 @@ func _songs() -> Dictionary:
 				"G6 _ _ _ F6 _ D6 _ B5 _ _ _ G5 _ - -",
 			],
 		},
+		# Dionakra: żwawy marsz w A-dur, 132 BPM
+		"dionakra": {
+			"bpm": 132, "lead_duty": 0.25, "lead_vol": 0.19, "arp": [0, 1, 2, 1], "arp_vol": 0.09,
+			"kick": "k...k...k...k...", "snare": "....s.......s...", "hat": "h.h.h.h.h.h.h.h.",
+			"chords": ["A", "F#m", "D", "E", "A", "F#m", "D", "E", "D", "E", "C#m", "F#m", "D", "E", "A", "E"],
+			"lead": [
+				"E6 _ A5 _ C#6 _ E6 _ A6 _ _ _ E6 _ C#6 _",
+				"F#6 _ A5 _ C#6 _ F#6 _ A6 _ _ _ F#6 _ C#6 _",
+				"D6 _ F#5 _ A5 _ D6 _ F#6 _ _ _ D6 _ A5 _",
+				"E6 _ G#5 _ B5 _ E6 _ G#6 _ _ _ E6 _ B5 _",
+				"A6 _ _ E6 _ C#6 _ E6 _ A6 _ _ B6 _ A6 _",
+				"A6 _ _ F#6 _ C#6 _ F#6 _ A6 _ _ G#6 _ F#6 _",
+				"F#6 _ _ D6 _ A5 _ D6 _ F#6 _ _ E6 _ D6 _",
+				"E6 _ _ B5 _ G#5 _ B5 _ E6 _ _ _ _ - -",
+				"D6 _ F#6 _ A6 _ F#6 _ D6 _ A5 _ D6 _ F#6 _",
+				"E6 _ G#6 _ B6 _ G#6 _ E6 _ B5 _ E6 _ G#6 _",
+				"C#6 _ E6 _ G#6 _ E6 _ C#6 _ G#5 _ C#6 _ E6 _",
+				"F#6 _ A6 _ C#7 _ A6 _ F#6 _ C#6 _ F#6 _ A6 _",
+				"D6 _ _ A5 _ D6 _ F#6 _ A6 _ _ F#6 _ D6 _",
+				"E6 _ _ B5 _ E6 _ G#6 _ B6 _ _ G#6 _ E6 _",
+				"A6 _ E6 _ C#6 _ E6 _ A6 _ C#7 _ E7 _ _ _",
+				"B6 _ _ _ G#6 _ _ _ E6 _ _ _ B5 _ - -",
+			],
+		},
 	}
 
 func _gen_music() -> void:
@@ -438,3 +462,31 @@ func _gen_sfx() -> void:
 	S.tone(b, 0, 0.05, 500, 400, S.SQUARE, 0.45, 0.5, 0.001, 0.01)
 	S.tone(b, 0.06, 0.07, 400, 650, S.SQUARE, 0.45, 0.5, 0.001, 0.02)
 	_save("hold", b, 0.55)
+
+	# --- Dionakra
+	b = S.new_buf(0.12)
+	S.tone(b, 0, 0.07, 800, 1300, S.SQUARE, 0.5, 0.25, 0.001, 0.02)
+	S.noise(b, 0, 0.03, 0.4, 70.0, 1.0, true)
+	_save("brick", b, 0.7)
+	b = S.new_buf(0.2)
+	S.tone(b, 0, 0.14, 420, 380, S.SQUARE, 0.5, 0.125, 0.001, 0.05, 5.0)
+	S.tone(b, 0, 0.1, 1250, 1250, S.SINE, 0.3, 0.5, 0.001, 0.05, 8.0)
+	_save("clang", b, 0.7)
+	b = S.new_buf(0.12)
+	S.tone(b, 0, 0.09, 190, 120, S.TRI, 0.7, 0.5, 0.001, 0.03, 0.0, 0.0, 6.0, 7.5)
+	S.noise(b, 0, 0.02, 0.4, 80.0, 0.7)
+	_save("paddle", b, 0.8)
+	b = S.new_buf(0.07)
+	S.tone(b, 0, 0.05, 520, 520, S.SQUARE, 0.4, 0.5, 0.001, 0.02)
+	_save("wall", b, 0.5)
+	b = S.new_buf(0.2)
+	S.tone(b, 0, 0.16, 2100, 2100, S.SINE, 0.5, 0.5, 0.001, 0.08, 9.0)
+	_save("tink", b, 0.6)
+	b = S.new_buf(0.6)
+	S.noise(b, 0, 0.5, 0.8, 5.0, 0.25)
+	S.tone(b, 0, 0.4, 150, 40, S.TRI, 0.8, 0.5, 0.001, 0.1, 3.0, 0.0, 6.0, 7.5)
+	_save("boom", b, 0.9)
+	b = S.new_buf(0.2)
+	S.tone(b, 0, 0.14, 1900, 500, S.SQUARE, 0.45, 0.25, 0.001, 0.04)
+	S.noise(b, 0, 0.04, 0.3, 60.0, 1.0, true)
+	_save("laser", b, 0.65)
