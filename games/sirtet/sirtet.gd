@@ -5,8 +5,8 @@ extends Node3D
 
 const COLS := 8
 const CAM_FOV := 40.0
-const HUD_TOP_PX := 300.0           # miejsce na HUD i podgląd nad planszą (px bazowe)
-const CTRL_PX := 190.0              # miejsce na przyciski pod planszą
+const HUD_TOP_PX := 270.0           # miejsce na HUD i podgląd nad planszą (px bazowe)
+const CTRL_PX := 215.0              # miejsce na przyciski pod planszą
 const SPAWN_Y := -1
 const LOCK_DELAY := 0.5
 const JUNK := 7
@@ -152,10 +152,23 @@ func _setup_camera_and_layout() -> void:
 	var half_h := vp.y / ppu / 2.0
 	board_w = maxf(w, plane_w * 1.1)
 	board_d = maxf(24.0, half_h * 2.0 * 1.1)
+	# wysokość planszy: tyle rzędów, ile zmieści się między HUD-em a przyciskami
+	var avail := vp.y - HUD_TOP_PX - CTRL_PX
+	var fit := int(floor(avail / ppu)) - 2
+	if fit < 12:
+		# ekran niższy niż potrzeba (np. tablet): zostaje 12 rzędów, a kamera się oddala,
+		# żeby cała plansza (z ramką) mieściła się nad przyciskami
+		rows = 12
+		ppu = avail / float(rows + 2)
+		plane_w = vp.x / ppu
+		dist = (plane_w / 2.0) / half_tan
+		half_h = vp.y / ppu / 2.0
+		board_w = maxf(w, plane_w * 1.1)
+		board_d = maxf(24.0, half_h * 2.0 * 1.1)
+	else:
+		rows = mini(fit, 17)
 	camera.position = Vector3(0, dist, 0)
 	camera.rotation_degrees = Vector3(-90, 0, 0)
-	# wysokość planszy: tyle rzędów, ile zmieści się między HUD-em a przyciskami
-	rows = clampi(int(floor((vp.y - HUD_TOP_PX - CTRL_PX) / ppu)) - 2, 12, 17)
 	# górna krawędź ramki na ekranie = HUD_TOP_PX
 	var z_frame_top := (HUD_TOP_PX - vp.y / 2.0) / ppu
 	ox = -(COLS - 1) / 2.0

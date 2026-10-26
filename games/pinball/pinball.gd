@@ -144,6 +144,11 @@ func _setup_camera() -> void:
 	var dist := (w / 2.0) / half_tan + WALL_H
 	var half_w := dist * half_tan
 	var half_h := half_w / aspect
+	if half_h * 2.0 < 22.6:
+		# ekran niższy niż stół (np. tablet): oddal kamerę, by cały stół był widoczny
+		half_h = 11.3
+		half_w = half_h * aspect
+		dist = half_w / half_tan
 	board_w = maxf(w, half_w * 2.0 * 1.1)
 	board_d = maxf(22.0, half_h * 2.0 * 1.1)
 	camera.position = Vector3(0.1, dist, 0.0)
@@ -204,8 +209,8 @@ func _build_table() -> void:
 	for p in [Vector2(-2.0, -3.6), Vector2(0.9, -3.6), Vector2(-0.55, -1.2)]:
 		_add_bumper(p)
 	for i in 3:
-		_add_target(Vector3(-4.55, 0, -2.2 + i * 1.3), 1)
-		_add_target(Vector3(3.45, 0, -2.2 + i * 1.3), -1)
+		_add_target(Vector3(-4.63, 0, -2.2 + i * 1.3), 1)
+		_add_target(Vector3(3.53, 0, -2.2 + i * 1.3), -1)
 	for x in [-1.3, 0.1, 1.5]:
 		_add_lane(Vector3(x, 0, -8.4))
 	for x in [-2.0, -0.6, 0.8, 2.2]:
@@ -410,35 +415,70 @@ func _pm(parent: Node3D, mesh: Mesh, m: Material, pos: Vector3) -> MeshInstance3
 	return mi
 
 func _add_target(pos: Vector3, dir: int) -> void:
-	# układ scalony przy ścianie; dioda od strony pola gry zapala się po trafieniu
+	# Układ scalony przy ścianie w kształcie klina: skośna górna krawędź zrzuca kulkę w stronę pola gry
+	# (płaska półka tworzyła z bandą narożnik, w którym kulka potrafiła utknąć). Dioda od strony pola się zapala.
+	var pts: Array[Vector2] = []
+	for u in [Vector2(0.0, -0.36), Vector2(0.32, -0.1), Vector2(0.32, 0.36), Vector2(0.0, 0.36)]:
+		pts.append(Vector2(dir * (u.x - 0.16), u.y))      # współrzędne lokalne względem pos (środek = pos.x)
 	var body := StaticBody3D.new()
-	body.physics_material_override = _phys(0.1, 0.45)
+	body.physics_material_override = _phys(0.05, 0.45)
 	var cs := CollisionShape3D.new()
-	var s := BoxShape3D.new()
-	s.size = Vector3(0.5, 0.6, 0.9)
-	cs.shape = s
-	cs.position = Vector3(pos.x, 0.3, pos.z)
+	var shape := ConvexPolygonShape3D.new()
+	var ps := PackedVector3Array()
+	for p in pts:
+		ps.append(Vector3(p.x, 0.0, p.y))
+		ps.append(Vector3(p.x, 0.6, p.y))
+	shape.points = ps
+	cs.shape = shape
 	body.add_child(cs)
+	body.position = Vector3(pos.x, 0.0, pos.z)
 	root.add_child(body)
 	var vis := Node3D.new()
 	vis.position = pos
 	root.add_child(vis)
-	_pm(vis, _box_mesh(Vector3(0.5, 0.5, 0.9)), kit.mats.chip, Vector3(0, 0.25, 0))
-	_pm(vis, _box_mesh(Vector3(0.1, 0.02, 0.1)), kit.mats.chip_mark, Vector3(-0.15 * dir, 0.51, -0.3))
+	var chip_mat := (kit.mats.chip as StandardMaterial3D).duplicate() as StandardMaterial3D
+	chip_mat.cull_mode = BaseMaterial3D.CULL_DISABLED
+	var st := SurfaceTool.new()
+	st.begin(Mesh.PRIMITIVE_TRIANGLES)
+	for i in range(1, pts.size() - 1):
+		for k in [0, i, i + 1]:
+			st.set_normal(Vector3.UP)
+			st.add_vertex(Vector3(pts[k].x, 0.5, pts[k].y))
+	var c := Vector2.ZERO
+	for p in pts:
+		c += p
+	c /= pts.size()
+	for i in pts.size():
+		var a2 := pts[i]
+		var b2 := pts[(i + 1) % pts.size()]
+		var nn := ((a2 + b2) / 2.0 - c).normalized()
+		var nrm := Vector3(nn.x, 0, nn.y)
+		var va := Vector3(a2.x, 0, a2.y)
+		var vb := Vector3(b2.x, 0, b2.y)
+		var vah := Vector3(a2.x, 0.5, a2.y)
+		var vbh := Vector3(b2.x, 0.5, b2.y)
+		for q in [va, vb, vbh, va, vbh, vah]:
+			st.set_normal(nrm)
+			st.add_vertex(q)
+	var mi := MeshInstance3D.new()
+	mi.mesh = st.commit()
+	mi.material_override = chip_mat
+	vis.add_child(mi)
+	_pm(vis, _box_mesh(Vector3(0.1, 0.02, 0.1)), kit.mats.chip_mark, Vector3(-0.05 * dir, 0.51, 0.2))
 	var led_mat := kit.mat(Color(0.05, 0.12, 0.05), 0.0, 0.3, Color(0.2, 1.0, 0.3), 0.3)
-	_pm(vis, _box_mesh(Vector3(0.08, 0.3, 0.7)), led_mat, Vector3(0.24 * dir, 0.3, 0))
+	_pm(vis, _box_mesh(Vector3(0.06, 0.3, 0.4)), led_mat, Vector3(dir * 0.17, 0.3, 0.15))
 	var area := Area3D.new()
 	var acs := CollisionShape3D.new()
 	var ash := BoxShape3D.new()
-	ash.size = Vector3(0.8, 0.7, 1.1)
+	ash.size = Vector3(0.7, 0.7, 0.9)
 	acs.shape = ash
-	acs.position = Vector3(pos.x + 0.1 * dir, 0.35, pos.z)
+	acs.position = Vector3(pos.x + 0.1 * dir, 0.35, pos.z + 0.1)
 	area.add_child(acs)
 	root.add_child(area)
 	var td := {"pos": Vector3(pos.x, 0.4, pos.z), "mat": led_mat, "lit": false, "cd": 0, "dir": dir}
 	targets.append(td)
 	area.body_entered.connect(func(body: Node): _target_hit(td, body))
-	zap_list.append(Vector3(pos.x + 0.3 * dir, 0.4, pos.z))
+	zap_list.append(Vector3(pos.x + 0.25 * dir, 0.4, pos.z))
 
 func _box_mesh(size: Vector3) -> BoxMesh:
 	var m := BoxMesh.new()
@@ -689,7 +729,7 @@ func _spawn_ball(pos: Vector3, vel := Vector3.ZERO) -> Dictionary:
 	root.add_child(rb)
 	rb.global_position = pos
 	rb.linear_velocity = vel
-	var d := {"node": rb, "mat": bm, "light": glow, "charge": randf() * 0.4, "goal": randf_range(0.8, 1.6), "speed": 0.0}
+	var d := {"node": rb, "mat": bm, "light": glow, "charge": randf() * 0.4, "goal": randf_range(0.8, 1.6), "speed": 0.0, "still": 0.0}
 	rb.body_entered.connect(func(_b: Node): _ball_hit(d))
 	balls.append(d)
 	return d
@@ -1130,6 +1170,15 @@ func _physics_process(delta: float) -> void:
 		if p.z > DRAIN_Z or absf(p.x) > 8.0 or p.z < -13.0:
 			_drain(b)
 			continue
+		# zabezpieczenie przed zawieszeniem: nieruchoma kulka poza strefą flipperów dostaje delikatnego kopa
+		if state == "play" and b.speed < 0.35 and p.z < 7.4 and p.x < 4.0:
+			b.still += delta
+			if b.still > 1.6:
+				b.still = 0.0
+				rb.apply_central_impulse(Vector3(randf_range(-1.0, 1.0), 0.0, -0.5) * 2.2)
+				fx.sparks(p, 8)
+		else:
+			b.still = 0.0
 		_update_charge(b, delta)
 	Audio.set_roll(max_speed if state == "play" else 0.0)
 	_update_pickups(delta)

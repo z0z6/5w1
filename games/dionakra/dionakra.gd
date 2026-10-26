@@ -55,6 +55,7 @@ var paddle_x := 0.0
 var target_x := 0.0
 var pw := 2.0
 var touching := false
+var btn_dir := 0
 var state := "ready"           # ready / play / end / over
 var level := 1
 var lives := 3
@@ -445,6 +446,7 @@ func _physics_process(delta: float) -> void:
 		kx -= 1.0
 	if Input.is_key_pressed(KEY_RIGHT) or Input.is_key_pressed(KEY_D):
 		kx += 1.0
+	kx += float(btn_dir)
 	if kx != 0.0:
 		target_x = clampf(target_x + kx * 14.0 * delta, -FIELD, FIELD)
 	if fx_t.stun <= 0.0 and (state == "play" or state == "ready"):
@@ -939,13 +941,37 @@ func _setup_ui() -> void:
 	lbl_toast.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	lbl_toast.modulate.a = 0.0
 	ui.add_child(lbl_toast)
-	lbl_hint = UiKit.label("DOTKNIJ, ABY WYSTRZELIĆ KULKĘ", 16, UiKit.C_CYAN, 6)
+	var bottom := HBoxContainer.new()
+	bottom.set_anchors_and_offsets_preset(Control.PRESET_BOTTOM_WIDE)
+	bottom.offset_left = 14
+	bottom.offset_right = -14
+	bottom.offset_top = -150
+	bottom.offset_bottom = -28
+	bottom.add_theme_constant_override("separation", 14)
+	ui.add_child(bottom)
+	bottom.add_child(_dir_btn("<", -1))
+	bottom.add_child(_dir_btn(">", 1))
+	lbl_hint = UiKit.label("DOTKNIJ POLE, ABY WYSTRZELIĆ KULKĘ", 16, UiKit.C_CYAN, 6)
 	lbl_hint.set_anchors_preset(Control.PRESET_BOTTOM_WIDE)
-	lbl_hint.offset_top = -120
-	lbl_hint.offset_bottom = -70
+	lbl_hint.offset_top = -215
+	lbl_hint.offset_bottom = -165
 	lbl_hint.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	lbl_hint.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	ui.add_child(lbl_hint)
+
+func _dir_btn(text: String, d: int) -> Button:
+	var b := Button.new()
+	b.text = text
+	b.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	b.focus_mode = Control.FOCUS_NONE
+	UiKit.style_button(b, 40, UiKit.C_CYAN)
+	b.button_down.connect(func():
+		if overlay == null and result_panel == null:
+			btn_dir = d)
+	b.button_up.connect(func():
+		if btn_dir == d:
+			btn_dir = 0)
+	return b
 
 func _btn(text: String, cb: Callable, snd := "click") -> Button:
 	var b := Button.new()
@@ -1035,6 +1061,7 @@ func _unhandled_input(e: InputEvent) -> void:
 func _open_options() -> void:
 	if overlay:
 		return
+	btn_dir = 0
 	var panel := OptionsPanel.new()
 	panel.closed.connect(_close_overlay)
 	overlay = panel
@@ -1044,6 +1071,7 @@ func _open_options() -> void:
 func _open_levels() -> void:
 	if overlay:
 		return
+	btn_dir = 0
 	var rt := Control.new()
 	rt.process_mode = Node.PROCESS_MODE_ALWAYS
 	rt.set_anchors_preset(Control.PRESET_FULL_RECT)

@@ -124,6 +124,12 @@ func _setup_camera() -> void:
 	var dist := (w / 2.0) / half_tan + 0.7
 	var half_w := dist * half_tan
 	var half_h := half_w / aspect
+	# na niższych ekranach (tablet) oddal kamerę, by plansza mieściła się między HUD-em a boosterami
+	var ppu_cap := minf((vp.y / 2.0 - 250.0) / 5.2, (vp.y / 2.0 - 140.0) / 6.8)
+	if vp.x / (2.0 * half_w) > ppu_cap and ppu_cap > 10.0:
+		half_w = vp.x / (2.0 * ppu_cap)
+		dist = half_w / half_tan
+		half_h = half_w / aspect
 	board_w = maxf(w, half_w * 2.0 * 1.1)
 	board_d = maxf(ROWS + 4.0, half_h * 2.0 * 1.1)
 	camera.position = Vector3(0, dist, 0)
