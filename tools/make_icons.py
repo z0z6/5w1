@@ -79,113 +79,96 @@ def star4(d, cx, cy, r, color):
     d.polygon(pts, fill=color)
 
 def foreground(size, seed=7):
+    """Sam mikroprocesor w gnieździe (bez kulki): metalowa pokrywa z grawerem "5", złote styki, zaczep."""
     S = size * SS
-    rnd = random.Random(seed)
     im = Image.new("RGBA", (S, S), (0, 0, 0, 0))
+    cx = cy = 0.5 * S
 
-    # --- układ scalony
-    cx, cy, h = 0.68*S, 0.28*S, 0.12*S
-    chip = Image.new("RGBA", (S, S), (0, 0, 0, 0)); cd = ImageDraw.Draw(chip)
-    # nóżki
-    for i in range(6):
-        t = cy - h*0.78 + i*(h*1.56/5)
-        for side in (-1, 1):
-            x0 = cx + side*h
-            cd.rectangle((x0 - (0.0 if side > 0 else 0.035*S), t-0.011*S, x0 + (0.035*S if side > 0 else 0.0), t+0.011*S), fill=(196, 202, 212, 255))
-    for i in range(6):
-        t = cx - h*0.78 + i*(h*1.56/5)
-        for side in (-1, 1):
-            y0 = cy + side*h
-            cd.rectangle((t-0.011*S, y0 - (0.0 if side > 0 else 0.035*S), t+0.011*S, y0 + (0.035*S if side > 0 else 0.0)), fill=(196, 202, 212, 255))
-    cd.rounded_rectangle((cx-h, cy-h, cx+h, cy+h), radius=0.02*S, fill=(16, 20, 28, 255), outline=(70, 84, 104, 255), width=int(0.006*S))
-    # cyfra "5" jako pixel-art
-    glyph = ["11111", "10000", "11110", "00001", "00001", "10001", "01110"]
-    px = 0.016*S; gx0 = cx - 2.5*px; gy0 = cy - 3.5*px
-    for r_, row in enumerate(glyph):
-        for c_, v in enumerate(row):
-            if v == "1":
-                cd.rectangle((gx0+c_*px, gy0+r_*px, gx0+(c_+1)*px-1, gy0+(r_+1)*px-1), fill=(0, 229, 255, 255))
-    cd.ellipse((cx-h+0.018*S, cy-h+0.018*S, cx-h+0.034*S, cy-h+0.034*S), fill=(230, 235, 245, 255))
-    # cień + układ
-    shadow = Image.new("RGBA", (S, S), (0, 0, 0, 0)); sd = ImageDraw.Draw(shadow)
-    sd.rounded_rectangle((cx-h+0.012*S, cy-h+0.02*S, cx+h+0.012*S, cy+h+0.02*S), radius=0.02*S, fill=(0, 0, 0, 160))
-    im = Image.alpha_composite(im, shadow.filter(ImageFilter.GaussianBlur(0.012*S)))
-    im = Image.alpha_composite(im, chip)
-    # poświata cyfry
-    gl = Image.new("RGBA", (S, S), (0, 0, 0, 0)); gd = ImageDraw.Draw(gl)
-    for r_, row in enumerate(glyph):
-        for c_, v in enumerate(row):
-            if v == "1":
-                gd.rectangle((gx0+c_*px, gy0+r_*px, gx0+(c_+1)*px, gy0+(r_+1)*px), fill=(0, 229, 255, 255))
-    im = Image.alpha_composite(im, glow(gl, 0.012*S, 1.0))
-
-    # --- kulka
-    mx, my, mr = 0.35*S, 0.65*S, 0.19*S
+    # poświata neonowa pod gniazdem
     halo = Image.new("RGBA", (S, S), (0, 0, 0, 0)); hd = ImageDraw.Draw(halo)
-    hd.ellipse((mx-mr*1.25, my-mr*1.25, mx+mr*1.25, my+mr*1.25), fill=(0, 220, 255, 150))
-    im = Image.alpha_composite(im, glow(halo, 0.05*S))
-    yy, xx = np.mgrid[0:S, 0:S].astype(np.float32)
-    dx, dy = (xx-mx)/mr, (yy-my)/mr
-    rr = np.sqrt(dx*dx + dy*dy)
-    inside = rr <= 1.0
-    z = np.sqrt(np.clip(1 - rr*rr, 0, 1))
-    # światło z lewego-górnego rogu
-    lx, ly, lz = -0.45, -0.55, 0.70
-    ln = math.sqrt(lx*lx+ly*ly+lz*lz); lx, ly, lz = lx/ln, ly/ln, lz/ln
-    diff = np.clip(dx*lx + dy*ly + z*lz, 0, 1)
-    spec = np.clip(diff, 0, 1)**28
-    rim = (1 - z)**2.2
-    base = np.array([0.0, 0.80, 1.0], np.float32); deep = np.array([0.0, 0.25, 0.45], np.float32)
-    col = deep[None,None,:]*(1-diff[...,None]) + base[None,None,:]*diff[...,None]
-    col = col + np.array([0.0, 0.55, 0.65], np.float32)[None,None,:]*rim[...,None]*0.9   # fluorescencyjny rąbek
-    col = col + spec[...,None]*1.2
-    # iskierki ładunku na powierzchni
-    for _ in range(26):
-        a = rnd.random()*math.tau; rad = rnd.random()**0.5*0.88
-        sx, sy = mx + math.cos(a)*rad*mr, my + math.sin(a)*rad*mr
-        r0 = rnd.uniform(0.006, 0.014)*S
-        m = ((xx-sx)**2 + (yy-sy)**2) <= r0*r0
-        c = rnd.choice([(0.9,1.0,1.0),(1.0,0.5,0.95),(1.0,1.0,0.8)])
-        for k in range(3): col[..., k][m] = c[k]
-    rgba = np.zeros((S, S, 4), np.float32)
-    rgba[..., :3] = np.clip(col, 0, 1)*255
-    rgba[..., 3] = inside*255
-    ball = Image.fromarray(rgba.astype(np.uint8), "RGBA")
-    # antyaliasing krawędzi
-    mask = ball.split()[3].filter(ImageFilter.GaussianBlur(SS*0.6)); ball.putalpha(mask)
-    im = Image.alpha_composite(im, ball)
+    hd.rounded_rectangle((cx-0.36*S, cy-0.36*S, cx+0.36*S, cy+0.36*S), radius=0.06*S, fill=(0, 229, 255, 110))
+    im = Image.alpha_composite(im, halo.filter(ImageFilter.GaussianBlur(0.045*S)))
 
-    # --- wyładowanie elektryczne
-    ax, ay = mx + 0.707*mr, my - 0.707*mr
-    bx, by = 0.585*S, 0.39*S
-    pts = [(ax, ay)]
-    n = 7
-    for i in range(1, n):
-        t = i/n
-        px_, py_ = ax+(bx-ax)*t, ay+(by-ay)*t
-        j = 0.028*S
-        pts.append((px_+rnd.uniform(-j, j), py_+rnd.uniform(-j, j)))
-    pts.append((bx, by))
-    arc = Image.new("RGBA", (S, S), (0, 0, 0, 0)); ad = ImageDraw.Draw(arc)
-    ad.line(pts, fill=(120, 230, 255, 255), width=int(0.026*S), joint="curve")
-    im = Image.alpha_composite(im, glow(arc, 0.014*S, 2.0))
-    core = Image.new("RGBA", (S, S), (0, 0, 0, 0)); cdd = ImageDraw.Draw(core)
-    cdd.line(pts, fill=(255, 255, 255, 255), width=int(0.011*S), joint="curve")
-    im = Image.alpha_composite(im, core)
-    # drugie, krótsze odgałęzienie
-    ax2, ay2 = mx + 0.97*mr, my - 0.2*mr
-    pts2 = [(ax2, ay2), (ax2+0.04*S, ay2-0.02*S), (ax2+0.07*S, ay2+0.015*S), (ax2+0.11*S, ay2-0.01*S)]
-    br = Image.new("RGBA", (S, S), (0, 0, 0, 0)); brd = ImageDraw.Draw(br)
-    brd.line(pts2, fill=(255, 120, 240, 255), width=int(0.009*S), joint="curve")
-    im = Image.alpha_composite(im, glow(br, 0.006*S, 2.0))
-    im = Image.alpha_composite(im, br)
+    # cień
+    sh = Image.new("RGBA", (S, S), (0, 0, 0, 0)); sd = ImageDraw.Draw(sh)
+    sd.rounded_rectangle((cx-0.33*S+0.012*S, cy-0.33*S+0.02*S, cx+0.33*S+0.012*S, cy+0.33*S+0.02*S), radius=0.04*S, fill=(0, 0, 0, 170))
+    im = Image.alpha_composite(im, sh.filter(ImageFilter.GaussianBlur(0.012*S)))
 
-    # --- gwiazdki retro
+    d = ImageDraw.Draw(im)
+    # gniazdo (socket): ciemna ramka z rzędami złotych otworów
+    sw = 0.33*S
+    d.rounded_rectangle((cx-sw, cy-sw, cx+sw, cy+sw), radius=0.04*S, fill=(16, 20, 28, 255), outline=(84, 98, 120, 255), width=int(0.008*S))
+    pitch = 0.026*S
+    n = int(2*sw/pitch)
+    for i in range(n):
+        for j in range(n):
+            x = cx - sw + (i+0.5)*pitch*(2*sw/(n*pitch)); y = cy - sw + (j+0.5)*pitch*(2*sw/(n*pitch))
+            # tylko pas między substratem a krawędzią gniazda
+            dx, dy = abs(x-cx), abs(y-cy)
+            m = max(dx, dy)
+            if 0.255*S < m < 0.315*S:
+                r = 0.0055*S
+                d.ellipse((x-r, y-r, x+r, y+r), fill=(222, 178, 70, 255))
+    # zaczep dociskowy (dźwignia) po prawej
+    d.rounded_rectangle((cx+sw-0.004*S, cy-0.22*S, cx+sw+0.03*S, cy+0.22*S), radius=0.01*S, fill=(190, 196, 208, 255), outline=(110, 118, 132, 255), width=int(0.004*S))
+    d.ellipse((cx+sw+0.006*S, cy-0.24*S, cx+sw+0.03*S, cy-0.2*S), fill=(150, 156, 170, 255))
+
+    # substrat procesora (zielony) ze złotymi padami na brzegu
+    pw = 0.25*S
+    d.rounded_rectangle((cx-pw, cy-pw, cx+pw, cy+pw), radius=0.02*S, fill=(20, 90, 52, 255), outline=(8, 48, 28, 255), width=int(0.006*S))
+    for k in range(14):
+        t = -pw*0.86 + k*(pw*1.72/13)
+        for (x0, y0, x1, y1) in (
+            (cx+t-0.007*S, cy-pw+0.006*S, cx+t+0.007*S, cy-pw+0.022*S),
+            (cx+t-0.007*S, cy+pw-0.022*S, cx+t+0.007*S, cy+pw-0.006*S),
+            (cx-pw+0.006*S, cy+t-0.007*S, cx-pw+0.022*S, cy+t+0.007*S),
+            (cx+pw-0.022*S, cy+t-0.007*S, cx+pw-0.006*S, cy+t+0.007*S)):
+            d.rectangle((x0, y0, x1, y1), fill=(230, 188, 80, 255))
+    # znacznik pinu 1 (trójkąt w rogu)
+    d.polygon([(cx-pw+0.004*S, cy-pw+0.004*S), (cx-pw+0.05*S, cy-pw+0.004*S), (cx-pw+0.004*S, cy-pw+0.05*S)], fill=(236, 196, 90, 255))
+    # drobne kondensatory SMD wokół pokrywy
+    for (px, py) in ((-0.215, -0.1), (-0.215, 0.1), (0.215, -0.1), (0.215, 0.1), (-0.1, 0.215), (0.1, 0.215)):
+        d.rectangle((cx+px*S-0.012*S, cy+py*S-0.008*S, cx+px*S+0.012*S, cy+py*S+0.008*S), fill=(196, 150, 80, 255))
+
+    # metalowa pokrywa (IHS): gradient + fazowanie
+    hw = 0.19*S
+    x0, y0, x1, y1 = int(cx-hw), int(cy-hw), int(cx+hw), int(cy+hw)
+    w_, h_ = x1-x0, y1-y0
+    yy, xx = np.mgrid[0:h_, 0:w_].astype(np.float32)
+    g = (xx/w_ + yy/h_)/2.0
+    base = 0.86 - 0.34*g + 0.10*np.sin(g*9.0)
+    arr = np.zeros((h_, w_, 4), np.float32)
+    arr[..., 0] = np.clip(base*212, 0, 255); arr[..., 1] = np.clip(base*218, 0, 255); arr[..., 2] = np.clip(base*228, 0, 255); arr[..., 3] = 255
+    lid = Image.fromarray(arr.astype(np.uint8), "RGBA")
+    mask = Image.new("L", (w_, h_), 0)
+    ImageDraw.Draw(mask).rounded_rectangle((0, 0, w_-1, h_-1), radius=int(0.025*S), fill=255)
+    lid.putalpha(mask)
+    im.alpha_composite(lid, (x0, y0))
+    d = ImageDraw.Draw(im)
+    d.rounded_rectangle((x0, y0, x1, y1), radius=int(0.025*S), outline=(250, 252, 255, 255), width=int(0.006*S))
+    d.rounded_rectangle((x0+0.01*S, y0+0.01*S, x1-0.01*S, y1-0.01*S), radius=int(0.02*S), outline=(120, 128, 142, 200), width=int(0.004*S))
+    # grawer: pikselowa cyfra "5" + linie opisu
+    glyph = ["11111", "10000", "11110", "00001", "00001", "10001", "01110"]
+    px = 0.021*S; gx0 = cx - 2.5*px; gy0 = cy - 4.1*px
+    for r_, row in enumerate(glyph):
+        for c_, v in enumerate(row):
+            if v == "1":
+                d.rectangle((gx0+c_*px+0.002*S, gy0+r_*px+0.002*S, gx0+(c_+1)*px+0.002*S, gy0+(r_+1)*px+0.002*S), fill=(255, 255, 255, 210))
+                d.rectangle((gx0+c_*px, gy0+r_*px, gx0+(c_+1)*px-1, gy0+(r_+1)*px-1), fill=(36, 48, 70, 255))
+    for k, wl in enumerate((0.20, 0.13)):
+        yy_ = cy + 0.115*S + k*0.026*S
+        d.rectangle((cx-wl*S/2*1.0, yy_, cx+wl*S/2*1.0, yy_+0.011*S), fill=(60, 72, 94, 255))
+    # odblask
+    spec = Image.new("RGBA", (S, S), (0, 0, 0, 0)); spd = ImageDraw.Draw(spec)
+    spd.polygon([(x0+0.02*S, y0+0.02*S), (x0+0.2*S, y0+0.02*S), (x0+0.02*S, y0+0.2*S)], fill=(255, 255, 255, 70))
+    im = Image.alpha_composite(im, spec.filter(ImageFilter.GaussianBlur(0.004*S)))
+
+    # iskierki (jak w grze)
     st = Image.new("RGBA", (S, S), (0, 0, 0, 0)); sd2 = ImageDraw.Draw(st)
-    star4(sd2, 0.60*S, 0.60*S, 0.035*S, (255, 212, 0, 255))
-    star4(sd2, 0.21*S, 0.42*S, 0.03*S, (255, 43, 214, 255))
-    star4(sd2, 0.54*S, 0.78*S, 0.024*S, (255, 255, 255, 255))
-    star4(sd2, 0.80*S, 0.58*S, 0.026*S, (0, 229, 255, 255))
+    star4(sd2, 0.80*S, 0.22*S, 0.034*S, (255, 212, 0, 255))
+    star4(sd2, 0.19*S, 0.78*S, 0.03*S, (255, 43, 214, 255))
+    star4(sd2, 0.22*S, 0.2*S, 0.022*S, (255, 255, 255, 255))
+    star4(sd2, 0.8*S, 0.8*S, 0.026*S, (0, 229, 255, 255))
     im = Image.alpha_composite(im, glow(st, 0.008*S, 1.5))
     im = Image.alpha_composite(im, st)
     return im.resize((size, size), Image.LANCZOS)

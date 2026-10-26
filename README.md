@@ -93,3 +93,11 @@ elektronicznych jako ściany, otwory montażowe oraz **zwarcia** - okresowe łuk
 - Power-upy spadają z cegieł (11 rodzajów, 7 pomaga / 4 przeszkadza): szersza/węższa paletka, spowolnienie/szybka kula,
   multiball, wyładowania (paletka strzela), magnes, przebicie, życie, odwrócone sterowanie, zwarcie paletki.
 - Sterowanie: palec przesuwa paletkę, dotknięcie wystrzeliwuje kulkę; klawiatura: strzałki + spacja.
+
+## Wersja 2.0 - poprawki po testach na tablecie
+- Ikona: sam mikroprocesor (pokrywa z grawerem "5", złote styki, zaczep) na płytce PCB, bez kulki (`tools/make_icons.py`).
+- Pinball: cele przy bandach mają teraz skośną górną krawędź i są mniejsze (kulka nie zawisa w narożniku);
+  dodatkowo zabezpieczenie, które delikatnie szturcha kulkę nieruchomą poza strefą flipperów.
+- Dionakra: dwa przyciski < > u dołu (przytrzymanie przesuwa paletkę); sterowanie palcem po polu nadal działa.
+- Sirtet: wyższy ekran = więcej rzędów, niższy (tablet) = kamera oddala się tak, by cała plansza mieściła się nad
+  przyciskami (min. 12 rzędów). Ta sama poprawka w Pinballu i Chip Match.
