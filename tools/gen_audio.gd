@@ -160,6 +160,78 @@ func _songs() -> Dictionary:
 				"B6 _ _ _ G#6 _ _ _ E6 _ _ _ B5 _ - -",
 			],
 		},
+		# Sredavni Ecaps (wirusy): marsz w G-moll, 138 BPM
+		"invaders": {
+			"bpm": 138, "lead_duty": 0.125, "lead_vol": 0.19, "arp": [0, 1, 2, 1], "arp_vol": 0.09,
+			"kick": "k.......k.k.....", "snare": "....s.......s...", "hat": "h.h.h.h.h.h.h.h.",
+			"chords": ["Gm", "Eb", "Cm", "D", "Gm", "Eb", "F", "D", "Gm", "Cm", "Eb", "D", "Gm", "Eb", "D", "D"],
+			"lead": [
+				"G5 _ _ G5 _ Bb5 _ D6 _ _ C6 _ Bb5 _ A5 _",
+				"G5 _ _ Eb6 _ D6 _ C6 _ _ Bb5 _ G5 _ Bb5 _",
+				"C6 _ _ C6 _ Eb6 _ G6 _ _ F6 _ Eb6 _ D6 _",
+				"D6 _ _ A5 _ D6 _ F#6 _ _ A6 _ F#6 _ D6 _",
+				"G6 _ _ D6 _ Bb5 _ D6 _ _ G6 _ F6 _ D6 _",
+				"Eb6 _ _ Bb5 _ G5 _ Bb5 _ _ Eb6 _ D6 _ Bb5 _",
+				"C6 _ _ F6 _ A6 _ F6 _ _ C6 _ A5 _ C6 _",
+				"D6 _ F#6 _ A6 _ F#6 _ D6 _ C6 _ A5 _ - -",
+				"Bb5 _ D6 _ G6 _ D6 _ Bb5 _ D6 _ G6 _ _ _",
+				"C6 _ Eb6 _ G6 _ Eb6 _ C6 _ Eb6 _ G6 _ _ _",
+				"Bb5 _ Eb6 _ G6 _ Eb6 _ Bb5 _ Eb6 _ Bb6 _ _ _",
+				"A5 _ D6 _ F#6 _ D6 _ A5 _ D6 _ A6 _ _ _",
+				"G6 _ _ _ D6 _ _ _ Bb5 _ _ _ G5 _ _ _",
+				"Eb6 _ _ _ Bb5 _ _ _ G5 _ _ _ Eb5 _ _ _",
+				"F#6 _ A6 _ D7 _ A6 _ F#6 _ D6 _ A5 _ F#5 _",
+				"D6 _ _ _ A5 _ _ _ F#5 _ _ _ D5 _ - -",
+			],
+		},
+		# Pmuj Eldood (skok): skoczny G-dur, 128 BPM
+		"skok": {
+			"bpm": 128, "lead_duty": 0.25, "lead_vol": 0.19, "arp": [0, 2, 1, 2], "arp_vol": 0.08,
+			"kick": "k.......k.......", "snare": "........s.......", "hat": "h.h.h.h.h.h.h.h.",
+			"chords": ["G", "Em", "C", "D", "G", "Em", "C", "D", "C", "D", "Bm", "Em", "C", "D", "G", "D"],
+			"lead": [
+				"B5 _ D6 _ G6 _ D6 _ B5 _ D6 _ G6 _ _ _",
+				"G6 _ E6 _ B5 _ E6 _ G6 _ B6 _ G6 _ _ _",
+				"E6 _ C6 _ G5 _ C6 _ E6 _ G6 _ E6 _ _ _",
+				"F#6 _ D6 _ A5 _ D6 _ F#6 _ A6 _ F#6 _ _ _",
+				"D6 _ _ B5 _ G5 _ B5 _ D6 _ _ G6 _ B6 _",
+				"E6 _ _ B5 _ G5 _ B5 _ E6 _ _ G6 _ E6 _",
+				"C6 _ _ G5 _ E5 _ G5 _ C6 _ _ E6 _ C6 _",
+				"D6 _ _ A5 _ F#5 _ A5 _ D6 _ _ F#6 _ A6 _",
+				"G6 _ E6 _ C6 _ E6 _ G6 _ C7 _ B6 _ G6 _",
+				"A6 _ F#6 _ D6 _ F#6 _ A6 _ D7 _ C#7 _ A6 _",
+				"B5 _ D6 _ F#6 _ D6 _ B5 _ D6 _ F#6 _ _ _",
+				"G5 _ B5 _ E6 _ B5 _ G5 _ B5 _ E6 _ _ _",
+				"E6 _ _ _ G6 _ _ _ C7 _ _ _ G6 _ E6 _",
+				"F#6 _ _ _ A6 _ _ _ D7 _ _ _ A6 _ F#6 _",
+				"G6 _ B6 _ D7 _ B6 _ G6 _ D6 _ B5 _ G5 _",
+				"A5 _ _ _ F#5 _ _ _ D5 _ _ _ A4 _ - -",
+			],
+		},
+		# Dnammoc Elissim (obrona rdzenia): napięty H-moll, 120 BPM
+		"defense": {
+			"bpm": 120, "lead_duty": 0.25, "lead_vol": 0.19, "arp": [0, 1, 2, 1], "arp_vol": 0.10,
+			"kick": "k...k...k...k...", "snare": "........s.......", "hat": "h...h...h...h...",
+			"chords": ["Bm", "G", "D", "A", "Bm", "G", "A", "F#", "Bm", "G", "D", "A", "G", "A", "Bm", "F#"],
+			"lead": [
+				"B5 _ _ _ D6 _ _ _ F#6 _ _ _ D6 _ B5 _",
+				"B5 _ _ _ D6 _ _ _ G6 _ _ _ D6 _ B5 _",
+				"A5 _ _ _ D6 _ _ _ F#6 _ _ _ D6 _ A5 _",
+				"A5 _ _ _ C#6 _ _ _ E6 _ _ _ C#6 _ A5 _",
+				"F#6 _ _ D6 _ B5 _ D6 _ F#6 _ _ B6 _ F#6 _",
+				"G6 _ _ D6 _ B5 _ D6 _ G6 _ _ B6 _ G6 _",
+				"E6 _ _ C#6 _ A5 _ C#6 _ E6 _ _ A6 _ E6 _",
+				"F#6 _ _ C#6 _ A#5 _ C#6 _ F#6 _ _ A#6 _ F#6 _",
+				"D6 _ F#6 _ B6 _ F#6 _ D6 _ F#6 _ B6 _ _ _",
+				"D6 _ G6 _ B6 _ G6 _ D6 _ G6 _ B6 _ _ _",
+				"D6 _ F#6 _ A6 _ F#6 _ D6 _ F#6 _ A6 _ _ _",
+				"C#6 _ E6 _ A6 _ E6 _ C#6 _ E6 _ A6 _ _ _",
+				"B6 _ _ _ G6 _ _ _ D6 _ _ _ B5 _ _ _",
+				"A6 _ _ _ E6 _ _ _ C#6 _ _ _ A5 _ _ _",
+				"B5 _ D6 _ F#6 _ B6 _ F#6 _ D6 _ B5 _ F#5 _",
+				"F#6 _ _ _ C#6 _ _ _ A#5 _ _ _ F#5 _ - -",
+			],
+		},
 	}
 
 func _gen_music() -> void:
@@ -490,3 +562,26 @@ func _gen_sfx() -> void:
 	S.tone(b, 0, 0.14, 1900, 500, S.SQUARE, 0.45, 0.25, 0.001, 0.04)
 	S.noise(b, 0, 0.04, 0.3, 60.0, 1.0, true)
 	_save("laser", b, 0.65)
+
+	# --- Sredavni Ecaps / Pmuj Eldood / Dnammoc Elissim
+	b = S.new_buf(0.5)
+	S.tone(b, 0, 0.45, 700, 700, S.SQUARE, 0.4, 0.25, 0.01, 0.05, 0.0, 0.12, 9.0)
+	_save("ufo", b, 0.65)
+	b = S.new_buf(0.15)
+	S.tone(b, 0, 0.1, 260, 520, S.SINE, 0.6, 0.5, 0.002, 0.05, 6.0)
+	_save("bounce", b, 0.6)
+	b = S.new_buf(0.35)
+	S.tone(b, 0, 0.3, 160, 900, S.SQUARE, 0.5, 0.25, 0.002, 0.08, 0.0, 0.03, 16.0)
+	_save("spring", b, 0.75)
+	b = S.new_buf(0.3)
+	S.noise(b, 0, 0.1, 0.6, 30.0, 0.8)
+	S.tone(b, 0, 0.25, 500, 90, S.SQUARE, 0.4, 0.125, 0.001, 0.08)
+	_save("crack", b, 0.75)
+	b = S.new_buf(0.6)
+	S.noise(b, 0, 0.55, 0.4, 2.0, 0.2)
+	S.tone(b, 0, 0.55, 140, 220, S.SAW, 0.3, 0.5, 0.01, 0.1, 0.0, 0.1, 22.0)
+	_save("fan", b, 0.6)
+	b = S.new_buf(0.7)
+	for i in 4:
+		S.tone(b, i * 0.17, 0.16, 880 if i % 2 == 0 else 660, 880 if i % 2 == 0 else 660, S.SQUARE, 0.4, 0.5, 0.002, 0.02)
+	_save("alarm", b, 0.65)
