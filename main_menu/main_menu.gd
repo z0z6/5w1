@@ -8,6 +8,9 @@ const GAMES := [
 	{"name": "DIONAKRA", "scene": "res://games/dionakra/dionakra.tscn", "sub": "rozbij układy", "color": Color("ffd400")},
 	{"name": "SIRTET", "scene": "res://games/sirtet/sirtet.tscn", "sub": "bloki pamięci", "color": Color("39ff14")},
 	{"name": "CHIP MATCH", "scene": "res://games/chipmatch/chipmatch.tscn", "sub": "układaj trójki", "color": Color("ff8a00")},
+	{"name": "SREDAVNI ECAPS", "scene": "res://games/sredavni/sredavni.tscn", "sub": "wirusy z góry", "color": Color("ff4f6a")},
+	{"name": "PMUJ ELDOOD", "scene": "res://games/pmuj/pmuj.tscn", "sub": "skacz w górę płytki", "color": Color("7a6bff")},
+	{"name": "DNAMMOC ELISSIM", "scene": "res://games/dnammoc/dnammoc.tscn", "sub": "obrona rdzenia", "color": Color("00ffa0")},
 ]
 
 var panel: OptionsPanel
@@ -41,14 +44,19 @@ func _ready() -> void:
 	spacer.custom_minimum_size = Vector2(0, 6)
 	box.add_child(spacer)
 
+	# lista gier jest przewijana (8 pozycji)
+	var scroll := ScrollContainer.new()
+	scroll.size_flags_vertical = Control.SIZE_EXPAND_FILL
+	scroll.horizontal_scroll_mode = ScrollContainer.SCROLL_MODE_DISABLED
+	box.add_child(scroll)
+	var list := VBoxContainer.new()
+	list.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	list.add_theme_constant_override("separation", 16)
+	scroll.add_child(list)
 	var idx := 1
 	for g in GAMES:
-		box.add_child(_cartridge(idx, g))
+		list.add_child(_cartridge(idx, g))
 		idx += 1
-
-	var fill := Control.new()
-	fill.size_flags_vertical = Control.SIZE_EXPAND_FILL
-	box.add_child(fill)
 
 	var opt := Button.new()
 	opt.text = "OPCJE"
@@ -66,7 +74,7 @@ func _cartridge(num: int, g: Dictionary) -> Button:
 	var is_ready: bool = ResourceLoader.exists(g.scene)
 	var accent: Color = g.color
 	var b := Button.new()
-	b.custom_minimum_size = Vector2(0, 132)
+	b.custom_minimum_size = Vector2(0, 120)
 	b.disabled = not is_ready
 	UiKit.style_button(b, 16, accent)
 	var hb := HBoxContainer.new()
@@ -85,7 +93,7 @@ func _cartridge(num: int, g: Dictionary) -> Button:
 	vb.add_theme_constant_override("separation", 10)
 	vb.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	var nm := UiKit.label(g.name, 32, Color(1, 1, 1, dim))
+	var nm := UiKit.label(g.name, 32 if String(g.name).length() <= 12 else 22, Color(1, 1, 1, dim))
 	nm.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vb.add_child(nm)
 	var sb := UiKit.label(g.sub, 16, Color(accent.r, accent.g, accent.b, dim * 0.85))

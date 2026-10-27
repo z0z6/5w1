@@ -67,6 +67,7 @@ var last_hit_ms := 0
 var last_shock_ms := -10000
 var arc_tick := 0.0
 var mats := {}
+var kit: PcbKit
 
 var ox := 0.0
 var oz := 0.0
@@ -516,6 +517,7 @@ func _load_level(n: int) -> void:
 		level_root.queue_free()
 	level_root = Node3D.new()
 	add_child(level_root)
+	kit = PcbKit.new(level_root)
 
 	grid = MazeLevels.get_level(n)
 	rows = grid.size()
@@ -562,6 +564,8 @@ func _load_level(n: int) -> void:
 	_fit_camera()
 	_add_board()
 	_flush_batches(level_root)
+	kit.flush(level_root)
+	spark_spots.append_array(kit.spark_spots)
 	_spawn_ball()
 	_place_powerups()
 	_apply_options()
@@ -620,7 +624,8 @@ func _add_wall(body: StaticBody3D, p: Vector3, x: int, z: int) -> void:
 	body.add_child(cs)
 	var kind := int(_hash2(x * 3.0 + 1.0, z * 5.0 + 2.0) * 12.0) % 12
 	wall_kinds[Vector2i(x, z)] = kind
-	_wall_part(kind, p, x + z)
+	kit.begin_part(p, 0.0)
+	kit.part(kind, x + z)
 	if (x * 7 + z * 3) % 4 == 0:
 		spark_spots.append(p + Vector3(0, 0.75, 0))
 
@@ -834,7 +839,7 @@ func _add_board() -> void:
 	pcb.material_override = mats.pcb
 	level_root.add_child(pcb)
 	var occ := _add_buses(mw, md)
-	_add_decor(mw, md, occ)
+	kit.add_decor(mw, md, occ, board_w, board_d)
 
 	var body := StaticBody3D.new()
 	body.physics_material_override = _phys(0.8, 0.1)

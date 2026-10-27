@@ -21,6 +21,12 @@ var spark_spots: Array[Vector3] = []
 var bus_mats: Array = []
 var _o := Vector3.ZERO
 var _rot := 0.0
+var _vary := false
+var _vc := Vector3.ZERO
+var _yaw := 0.0
+var _off := Vector3.ZERO
+var _tint := Color.WHITE
+var _dirt := 0.0
 
 func _init(p_root: Node3D) -> void:
 	root = p_root
@@ -32,6 +38,7 @@ func scl(c: Color, k: float) -> Color:
 func mat(color: Color, metallic := 0.0, rough := 0.5, emis := Color.BLACK, emis_e := 0.0) -> StandardMaterial3D:
 	var m := StandardMaterial3D.new()
 	m.albedo_color = color
+	m.vertex_color_use_as_albedo = true
 	m.metallic = metallic
 	m.roughness = rough
 	if emis_e > 0.0:
@@ -51,10 +58,53 @@ func _mat(color: Color, metallic := 0.0, rough := 0.5, emis := Color.BLACK, emis
 func begin_part(origin: Vector3, rot_y := 0.0) -> void:
 	_o = origin
 	_rot = rot_y
+	_vary = false
+
+## Włącza losowe zróżnicowanie kolejnych elementów (ziarno z pozycji): drobny obrót i przesunięcie,
+## odcień, zabrudzona górna powierzchnia oraz ciemniejsza podstawa (fałszywe AO).
+func vary(seed_pos: Vector3) -> void:
+	var sx := seed_pos.x * 1.7 + 3.1
+	var sz := seed_pos.z * 2.3 + 1.7
+	_vc = seed_pos
+	_yaw = (_hash2(sx, sz) - 0.5) * 0.09
+	_off = Vector3((_hash2(sx + 11.0, sz + 5.0) - 0.5) * 0.05, 0.0, (_hash2(sx + 23.0, sz + 9.0) - 0.5) * 0.05)
+	_tint = Color(1.0 + (_hash2(sx + 31.0, sz) - 0.5) * 0.16, 1.0 + (_hash2(sx, sz + 37.0) - 0.5) * 0.12,
+		1.0 + (_hash2(sx + 41.0, sz + 43.0) - 0.5) * 0.14)
+	_dirt = pow(_hash2(sx + 53.0, sz + 59.0), 1.6)
+	_vary = true
 
 func _xf(local: Vector3) -> Transform3D:
 	var b := Basis(Vector3.UP, _rot)
-	return Transform3D(b, _o + b * local)
+	var p := _o + b * local
+	if _vary:
+		var jb := Basis(Vector3.UP, _yaw)
+		p = jb * (p - _vc) + _vc + _off
+		b = jb * b
+	return Transform3D(b, p)
+
+## Dodaje prymityw z kolorami wierzchołków: ciemniejsza podstawa i (czasem) zabrudzona góra.
+func _add(m: Material, prim: PrimitiveMesh, local: Vector3) -> void:
+	var arrays := prim.get_mesh_arrays()
+	var verts: PackedVector3Array = arrays[Mesh.ARRAY_VERTEX]
+	var ymin := 1e9
+	var ymax := -1e9
+	for v in verts:
+		ymin = minf(ymin, v.y)
+		ymax = maxf(ymax, v.y)
+	var span := maxf(ymax - ymin, 0.001)
+	var cols := PackedColorArray()
+	cols.resize(verts.size())
+	var ao := 0.6 if _vary else 1.0
+	for i in verts.size():
+		var k := (verts[i].y - ymin) / span
+		var shade := lerpf(ao, 1.0, pow(k, 0.7))
+		if _vary and k > 0.92:
+			shade *= 1.0 - 0.22 * _dirt           # zabrudzona wierzchnia powierzchnia
+		cols[i] = Color(clampf(_tint.r * shade, 0.0, 1.5), clampf(_tint.g * shade, 0.0, 1.5), clampf(_tint.b * shade, 0.0, 1.5))
+	arrays[Mesh.ARRAY_COLOR] = cols
+	var am := ArrayMesh.new()
+	am.add_surface_from_arrays(Mesh.PRIMITIVE_TRIANGLES, arrays)
+	_batch(m).append_from(am, 0, _xf(local))
 
 func _batch(m: Material) -> SurfaceTool:
 	if not batches.has(m):
@@ -66,7 +116,7 @@ func _batch(m: Material) -> SurfaceTool:
 func box(m: Material, size: Vector3, local: Vector3) -> void:
 	var bm := BoxMesh.new()
 	bm.size = size
-	_batch(m).append_from(bm, 0, _xf(local))
+	_add(m, bm, local)
 
 func cyl(m: Material, r: float, h: float, local: Vector3, seg := 14) -> void:
 	var cm := CylinderMesh.new()
@@ -75,7 +125,7 @@ func cyl(m: Material, r: float, h: float, local: Vector3, seg := 14) -> void:
 	cm.height = h
 	cm.radial_segments = seg
 	cm.rings = 1
-	_batch(m).append_from(cm, 0, _xf(local))
+	_add(m, cm, local)
 
 func torus(m: Material, inner: float, outer: float, local: Vector3) -> void:
 	var tm := TorusMesh.new()
@@ -83,7 +133,7 @@ func torus(m: Material, inner: float, outer: float, local: Vector3) -> void:
 	tm.outer_radius = outer
 	tm.rings = 20
 	tm.ring_segments = 8
-	_batch(m).append_from(tm, 0, _xf(local))
+	_add(m, tm, local)
 
 ## Tworzy po jednym MeshInstance3D na materiał.
 func flush(parent: Node3D) -> void:
@@ -150,6 +200,18 @@ func _make_materials() -> void:
 	mats.resistor = _mat(Color(0.72, 0.62, 0.42), 0.0, 0.6)
 	mats.red_part = _mat(Color(0.6, 0.08, 0.08), 0.1, 0.4)
 	mats.ribbon = _mat(Color(0.055, 0.04, 0.025), 0.0, 0.75)
+	# dekale: miękki cień pod elementem i brązowo-żółty ślad topnika
+	var shdm := StandardMaterial3D.new()
+	shdm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	shdm.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	shdm.albedo_color = Color(0, 0, 0, 0.2)
+	mats.shadow = shdm
+	var flm := StandardMaterial3D.new()
+	flm.transparency = BaseMaterial3D.TRANSPARENCY_ALPHA
+	flm.albedo_color = Color(0.74, 0.54, 0.14, 0.2)
+	flm.roughness = 0.35
+	flm.metallic = 0.2
+	mats.flux = flm
 	mats.warn = _mat(Color(1.0, 0.8, 0.0), 0.0, 0.5, Color(1.0, 0.7, 0.0), 0.5)
 	# Diody LED (3 kolory, każdy pulsuje we własnym rytmie)
 	var led_cols := [Color(1.0, 0.15, 0.1), Color(0.1, 1.0, 0.3), Color(0.25, 0.6, 1.0)]
@@ -168,8 +230,22 @@ func _make_materials() -> void:
 	mats.pcb = sm
 
 # ------------------------------------------------------------------ części
+## Cień pod elementem i (u ok. 40% elementów) ślad topnika wokół podstawy.
+func _decals(variant: int) -> void:
+	var sx := _o.x * 1.3 + variant * 0.7
+	var sz := _o.z * 1.9
+	var keep_vary := _vary
+	_vary = false
+	box(mats.shadow, Vector3(1.1, 0.002, 1.1), Vector3(0.03, 0.002, 0.04))
+	if _hash2(sx + 7.0, sz + 3.0) < 0.4:
+		var r := 0.42 + _hash2(sx + 13.0, sz + 17.0) * 0.28
+		cyl(mats.flux, r, 0.002, Vector3((_hash2(sx + 19.0, sz) - 0.5) * 0.3, 0.0045, (_hash2(sx, sz + 29.0) - 0.5) * 0.3), 10)
+	_vary = keep_vary
+
 ## Element ściany / rzędu (12 rodzajów); pozycje względem begin_part().
 func part(kind: int, variant: int) -> void:
+	vary(_o)
+	_decals(variant)
 	match kind:
 		0:  # układ DIP z nóżkami
 			box(mats.chip, Vector3(0.82, 0.5, 0.94), Vector3(0, 0.25, 0))
@@ -261,6 +337,7 @@ func add_decor(mw: float, md: float, occ: Dictionary, board_w: float, board_d: f
 				continue
 			var h := _hash2(gx * 1.7 + 3.0, gz * 2.3 + 1.0)
 			var pos := Vector3(gx, 0, gz)
+			vary(pos)
 			if h < 0.05:
 				if _free_cells(gx, gz, 2, occ, mw, md, xm, zm):
 					_occupy(gx, gz, 2, occ)

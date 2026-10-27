@@ -101,3 +101,15 @@ elektronicznych jako ściany, otwory montażowe oraz **zwarcia** - okresowe łuk
 - Dionakra: dwa przyciski < > u dołu (przytrzymanie przesuwa paletkę); sterowanie palcem po polu nadal działa.
 - Sirtet: wyższy ekran = więcej rzędów, niższy (tablet) = kamera oddala się tak, by cała plansza mieściła się nad
   przyciskami (min. 12 rzędów). Ta sama poprawka w Pinballu i Chip Match.
+
+## Wersja 2.1 - trzy nowe gry (komplet 8) i "życie" części
+- **Zróżnicowanie części** (`common/pcb_kit.gd`, `common/shaders/pcb.gdshader`): losowy odcień, ciemniejsza podstawa
+  (fałszywe AO), zabrudzona góra, drobne przesunięcie i obrót, cień pod elementem, ślady topnika, plamy maski,
+  rysy. Siła: uniform `wear` w shaderze. Marble Maze używa teraz wspólnych części.
+- **SREDAVNI ECAPS** (`games/sredavni/`): wirusy schodzą rzędami, osłony, ufo-trojan, boss co 5 fal, 9 power-upów.
+- **PMUJ ELDOOD** (`games/pmuj/`): kulka podskakuje po platformach w górę przewijanej płytki; przechył telefonu
+  lub przyciski; platformy zwykłe/ruchome/kruche/sprężyny; wirusy; 6 power-upów.
+- **DNAMMOC ELISSIM** (`games/dnammoc/`): obrona 6 układów i 3 wyrzutni; stuknięcie = przechwytywacz + wybuch EMP;
+  dzielące się wirusy, bombowce, 9 power-upów łapanych wybuchem.
+- Menu ma 8 pozycji w przewijanej liście. Nazwy trzech gier to oryginalne nazwy zapisane od tyłu.
+- Muzyka i efekty: `tools/gen_audio.gd` (nowe motywy: invaders, skok, defense).

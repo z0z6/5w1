@@ -175,7 +175,7 @@ func _build_board() -> void:
 	var occ := {}
 	kit.add_bus(-2.0, paddle_z + 2.0, 1, 2, rng, occ, board_d)
 	kit.add_bus(2.2, paddle_z + 2.0, 1, 2, rng, occ, board_d)
-	kit.add_decor(FIELD * 2.0 + 2.6, fh + 1.5, occ, board_w, board_d)
+	kit.add_decor(FIELD * 2.0 + 2.6, 2.0 * maxf(absf(z_top), absf(paddle_z)) + 3.0, occ, board_w, board_d)
 	kit.flush(root)
 
 # --------------------------------------------------------------- modele cegieł
